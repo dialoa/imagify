@@ -34,7 +34,7 @@ USER_NAME = $(shell git config user.name)
 .PHONY: help
 help:
 	@tabs 22 ; $(SED) -ne \
-	'/^## / h ; /^[^_.$$#][^ ]+:/ { G; s/^(.*):.*##(.*)/\1@\2/; P ; h }' \
+	'/^## / h ; /^[^_.$$#][^ ]+:/ { G; s/^(.*):.*##(.*)/\1@\2/; P ; h ; }' \
 	$(MAKEFILE_LIST) | tr @ '\t'
 
 #
