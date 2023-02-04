@@ -10,6 +10,11 @@ DIFF = diff
 # Use a POSIX sed with ERE ('v' is specific to GNU sed)
 SED := sed $(shell sed v </dev/null >/dev/null 2>&1 && echo " --posix") -E
 
+# Pandoc formats for test outputs
+ifeq "$(FORMAT)" ""
+FORMAT = html
+endif
+
 # Directory containing the Quarto extension
 QUARTO_EXT_DIR = _extensions/$(FILTER_NAME)
 # The extension's name. Used in the Quarto extension metadata
@@ -41,22 +46,27 @@ help:
 # Test
 #
 
-## Test that running the filter on the sample input yields expected output
+## Test that running the filter on the sample input yields expected outputs
 # The automatic variable `$<` refers to the first dependency
 # (i.e., the filter file).
 # let `test` be a PHONY target so that it is run each time it's called.
 .PHONY: test
 test: $(FILTER_FILE) test/input.md test/test.yaml
-	$(PANDOC) --defaults test/test.yaml | \
-		$(DIFF) test/expected.native -
+	@for ext in $(FORMAT) ; do \
+		$(PANDOC) --defaults test/test.yaml --to $$ext | \
+		$(DIFF) test/expected.$$ext - ; \
+	done
 
-
-## Re-generate the expected output
-# This file **must not** be a dependency of the `test` target, as that
+## Generate the expected output
+# This target **must not** be a dependency of the `test` target, as that
 # would cause it to be regenerated on each run, making the test
 # pointless.
-test/expected.native: $(FILTER_FILE) test/input.md test/test.yaml
-	$(PANDOC) --defaults test/test.yaml --output=$@
+.PHONY: generate
+generate: $(FILTER_FILE) test/input.md test/test.yaml
+	@for ext in $(FORMAT) ; do \
+		$(PANDOC) --defaults test/test.yaml --to $$ext \
+		--output test/expected.$$ext ; \
+	done
 
 #
 # Website
@@ -132,7 +142,7 @@ $(QUARTO_EXT_DIR)/$(FILTER_FILE): $(FILTER_FILE) $(QUARTO_EXT_DIR)
 
 ## Sets a new release (uses VERSION macro if defined)
 .PHONY: release
-release: quarto-extension
+release: quarto-extension regenerate
 	git commit -am "Release $(FILTER_NAME) $(VERSION)"
 	git tag v$(VERSION) -m "$(FILTER_NAME) $(VERSION)"
 	@echo 'Do not forget to push the tag back to github with `git push --tags`'

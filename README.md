@@ -27,6 +27,7 @@ line option.
 
 Users of Quarto can install this filter as an extension with
 
+
     quarto install extension tarleb/imagify
 
 and use it by adding `imagify` to the `filters` entry
