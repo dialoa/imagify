@@ -2,6 +2,17 @@
 FILTER_FILE := $(wildcard *.lua)
 # Name of the filter, *without* `.lua` file extension
 FILTER_NAME = $(patsubst %.lua,%,$(FILTER_FILE))
+# Source files
+#	Optional: build the filter file from multiple sources.
+#	*Do not comment out!* To deactivate it's safer to
+#	define an empty SOURCE_MAIN variable with:
+# 	SOURCE_MAIN = 
+SOURCE_DIR = src/
+SOURCE_MAIN = main
+SOURCE_MODULES = module
+# 
+SOURCE_FILES = $(SOURCE_MAIN:%=$(SOURCE_DIR)%.lua) $(SOURCE_MODULES:%=$(SOURCE_DIR)%.lua)
+BUILD_TARGET = 
 
 # Allow to use a different pandoc binary, e.g. when testing.
 PANDOC ?= pandoc
@@ -40,7 +51,46 @@ USER_NAME = $(shell git config user.name)
 help:
 	@tabs 22 ; $(SED) -ne \
 	'/^## / h ; /^[^_.$$#][^ ]+:/ { G; s/^(.*):.*##(.*)/\1@\2/; P ; h ; }' \
-	$(MAKEFILE_LIST) | tr @ '\t'
+	$(MAKEFILE_LIST) | tr @ '\t' 
+
+#
+# Build
+# 
+
+## Build the filter file from sources (requires luacc)
+# If SOURCE_MAIN is not empty, combine source files with
+# luacc and replace the filter file. 
+# ifeq is safer than ifdef (easier for the user to make
+# the variable empty than to make it undefined).
+.PHONY: build
+build: _build
+
+ifneq ($(SOURCE_MAIN), )
+.PHONY: _build
+_build: _check_luacc $(SOURCE_FILES)
+	@if [ -f $(QUARTO_EXT_DIR)/$(FILTER_FILE) ]; then \
+		luacc -o $(QUARTO_EXT_DIR)/$(FILTER_FILE) -i $(SOURCE_DIR) \
+			$(SOURCE_DIR)/$(SOURCE_MAIN) $(SOURCE_MODULES); \
+		if [ ! -L $(FILTER_FILE) ]; then \
+		    ln -s $(QUARTO_EXT_DIR)/$(FILTER_FILE) $(FILTER_FILE); \
+		fi \
+	else \
+		luacc -o $(FILTER_FILE) -i $(SOURCE_DIR) \
+			$(SOURCE_DIR)/$(SOURCE_MAIN) $(SOURCE_MODULES); \
+	fi
+else
+.PHONY: _build
+_build:
+
+endif
+
+.PHONY: check_luacc
+_check_luacc: 
+	@if ! command -v luacc &> /dev/null ; then \
+		echo "LuaCC is needed to build the filter. Available on LuaRocks:"; \
+		echo " https://luarocks.org/modules/mihacooper/luacc"; \
+		exit; \
+	fi
 
 #
 # Test
@@ -62,7 +112,7 @@ test: $(FILTER_FILE) test/input.md test/test.yaml
 # would cause it to be regenerated on each run, making the test
 # pointless.
 .PHONY: generate
-generate: $(FILTER_FILE) test/input.md test/test.yaml
+generate: build $(FILTER_FILE) test/input.md test/test.yaml
 	@for ext in $(FORMAT) ; do \
 		$(PANDOC) --defaults test/test.yaml --to $$ext \
 		--output test/expected.$$ext ; \
@@ -142,7 +192,7 @@ $(QUARTO_EXT_DIR)/$(FILTER_FILE): $(FILTER_FILE) $(QUARTO_EXT_DIR)
 
 ## Sets a new release (uses VERSION macro if defined)
 .PHONY: release
-release: quarto-extension regenerate
+release: build quarto-extension generate
 	git commit -am "Release $(FILTER_NAME) $(VERSION)"
 	git tag v$(VERSION) -m "$(FILTER_NAME) $(VERSION)"
 	@echo 'Do not forget to push the tag back to github with `git push --tags`'

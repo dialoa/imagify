@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Imagify Example</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Imagify Example</h1>
+</header>
+<p>Imagify the following span: <span class="imagify">the formula <img
+src="data:image/svg+xml,%3C%3Fxml%20version%3D%271.0%27%20encoding%3D%27UTF-8%27%3F%3E%0D%0A%3Csvg%20version%3D%271.1%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20xmlns%3Axlink%3D%27http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%27%20width%3D%2752.758205pt%27%20height%3D%2712.57891pt%27%20viewBox%3D%27-72.000004%20-71.999998%2035.172137%208.38594%27%3E%0D%0A%3Cstyle%20type%3D%27text%2Fcss%27%3E%0D%0A%3C%21%5BCDATA%5B%40font-face%7Bfont-family%3Anf0%3Bsrc%3Aurl%28data%3Aapplication%2Fx-font-woff%3Bbase64%2Cd09GRgABAAAAAAXwAA0AAAAAB5QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABGRlRNAAABMAAAABoAAAAck8F9VU9TLzIAAAFMAAAARgAAAFZVfGLPY21hcAAAAZQAAABvAAABngAsr8FjdnQgAAACBAAAAAQAAAAEACECeWdhc3AAAAIIAAAACAAAAAj%2F%2FwADZ2x5ZgAAAhAAAAJNAAACjPJn401oZWFkAAAEYAAAADMAAAA2IkbiNGhoZWEAAASUAAAAIAAAACQGGQMraG10eAAABLQAAAAgAAAAIA7YAMhsb2NhAAAE1AAAABIAAAASAmQB6m1heHAAAAToAAAAHwAAACAATgB7bmFtZQAABQgAAACxAAABCxfnSUZwb3N0AAAFvAAAADIAAABQ0kc9BHjaY2BgYGQAgsvb7s0A0Q9Y%2FeNgNABNjQYlAAB42mNgZMphnMDAysDA1MW0h4GBoQdCMz5gMGRkAooysDIzwABIgIEJyglIc00BUrb%2F%2FzP9%2Bi%2FEEMU0n4EHpAYkBwDv2Av5AAB42tWMuw2AMAwFzwkfCTEEAzAADRukoGYyJmKCFGwTbJOGhp4XnS2d4ge0QFRmZVASguVQK%2B5j9Q2T7kaf%2BbWUZ5azXow%2BE0%2Bsd61oU14cu5e8OfZH8u5Ah1zBgR6ko9bqNhd4R%2FhO5Pe5ARHQEY8AACECeQAAAAH%2F%2FwACeNo9UU1ME0EUfjP7M91Sti7tFspCu7sT20IttTvd3SAUCMVUEhAQTDAkxL9wMEb0AEoQD8aLkBhFLxITL94kJPQmiRcvXLx4NCHxKBw8aTwJOAV0knnvy8u873vzPcBgAaB2vAYCEOjYRJDvrhIRfjibsrTTXRUwh7Ap1MpSrVwlMvrTXUW1OtMsLc00aiFld3sbr%2B3PWHgSQIQeWMSraIVzihAAhSu4lm7ptYBX99fxRO2iysDA53IZAB%2F%2B5GEev4A0ZABOU1XKoghzYoT5VEX%2FsUV4ElREieXjs2a0wYznipmFzjsVGkrmzRA7P%2ButTLli0jgAuWSEJoNZT8bE20qZWVUTUNwq7ZbSSCwMvUvY5w6usGRiC%2FjB0Hz4C71C3yABSa4vUzvlFnsQc%2FSorEeZ47nFFLU5jDHHT6MZ7zLrSo0VC5GU0drn3H4zNHx%2FWFvs9wZLcxMGKai0LdmR%2F7A0dvNB%2BJg%2Ff%2FhbaOf8F2AQwPKPqcPoiLxH8tNqgNpuL%2BI61CbU%2F5cp0T3%2BkgjspIXIhKGXprXSnjjFpP6wEddigRiKIkVUiKIE6%2BSI4Af7ZucDmtL7cC7gNC5H6k1h9FLyzKNcQk61jS%2BPfsw0d32Kq11EC7UETRRGdVJQUkQJR5q%2B543Kl75ca2Xna52BDevgydMb7zNNDeuv%2BR9yfIt7%2BO2JR0d7IS6f69gb0libMMYNCyPd8tEe1e3M44tL18fvTQ3dihstg15nuTL9DK3ZG64tkoWrc%2BXxayOV%2BkJ2wBu5O%2F28sPEXkH6BKgAAAHjaY2BkYGAA4imJRffj%2BW2%2BMnAzvwCKMDxg9Y%2BD0f8%2F%2F%2F%2FCrMU0H8jlYGACiQIAX74MvwB42mNgZGBgmv%2F%2FC0MUs93%2Fz%2F8%2FMGsxAEVQAAcAt%2FIHSAFsACEAAAAAAU0AAALQAD4CZv%2FzAZ4AGgM%2BAC8CDAAtAAAAKgAqACoAQgCCALIBFAFGAAB42mNgZGBg4GDwYmBhAAEmIGZkAIk5MOiBBAALjQDKAHjaNY5LCsIwFEWPf0UQR%2BJIsoGWGnEijruADjp3kBZBUojtMlyAQ3fqbY0JN%2B8k930CLKkY0a8xC7aRJxwoI89Y84o8l%2FORRtOV8jdDZs8Truwjz9jRRZ5rvylw1Hp7cCNA4erucRPkNHjaIQZlOAyWlEzxInn97c9nEnm9Mumk4sa3eRNqZ2yamYvxVX%2BeE5vYzMov1S7w5D4MMRyHxpQuPO%2BNN8dUl98AVMoXHykidAAAAHjaY2BiwA84gJiRgYlBgZGJkZmRhZGVrdTQxcTYAkyZGkAoR46S8ny94uKSSgB2oQhVAAA%3D%29%20format%28%27woff%27%29%3B%7D%0D%0Atext.f0%20%7Bfont-family%3Anf0%3Bfont-size%3A6.973848px%7D%0D%0Atext.f1%20%7Bfont-family%3Anf0%3Bfont-size%3A9.96264px%7D%0D%0A%5D%5D%3E%0D%0A%3C%2Fstyle%3E%0D%0A%3Cg%20id%3D%27page1%27%3E%0D%0A%3Ctext%20class%3D%27f1%27%20x%3D%27-72.000004%27%20y%3D%27-63.733609%27%3E%F0%9D%90%B8%3Ctspan%20x%3D%27-62.816425%27%3E%3D%3C%2Ftspan%3E%3Ctspan%20x%3D%27-52.875691%27%3E%F0%9D%91%9A%F0%9D%91%90%3C%2Ftspan%3E%3C%2Ftext%3E%0D%0A%3Ctext%20class%3D%27f0%27%20x%3D%27-40.482164%27%20y%3D%27-67.320546%27%3E%F0%9D%A0%82%3C%2Ftext%3E%0D%0A%3C%2Fg%3E%0D%0A%3C%2Fsvg%3E"
+title="E = mc^2" style="vertical-align: baseline; "
+alt="Image based on the LaTeX code:E = mc^2" /></span>.</p>
+<div class="imagify">
+<p>Test this one: <img
+src="data:image/svg+xml,%3C%3Fxml%20version%3D%271.0%27%20encoding%3D%27UTF-8%27%3F%3E%0D%0A%3Csvg%20version%3D%271.1%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20xmlns%3Axlink%3D%27http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%27%20width%3D%2740.791064pt%27%20height%3D%2729.023205pt%27%20viewBox%3D%27-72.000004%20-71.999997%2027.194043%2019.348803%27%3E%0D%0A%3Cstyle%20type%3D%27text%2Fcss%27%3E%0D%0A%3C%21%5BCDATA%5B%40font-face%7Bfont-family%3Anf0%3Bsrc%3Aurl%28data%3Aapplication%2Fx-font-woff%3Bbase64%2Cd09GRgABAAAAAAUkAA0AAAAABqwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABGRlRNAAABMAAAABoAAAAck8F9V09TLzIAAAFMAAAARgAAAFZVdWLYY21hcAAAAZQAAABoAAABkgAo%2F39jdnQgAAAB%2FAAAAAQAAAAEACECeWdhc3AAAAIAAAAACAAAAAj%2F%2FwADZ2x5ZgAAAggAAAGeAAABwKwyPdxoZWFkAAADqAAAADMAAAA2IgPiOGhoZWEAAAPcAAAAIAAAACQF0QJwaG10eAAAA%2FwAAAAcAAAAHAylAOpsb2NhAAAEGAAAABAAAAAQARgBsm1heHAAAAQoAAAAHwAAACAATQBWbmFtZQAABEgAAACxAAABCxfnSUZwb3N0AAAE%2FAAAACYAAABFT4LlL3jaY2BgYGQAgsvb7s0A0Q9Y%2FeNhNABNlwYnAAB42mNgZKpinMDAysDA1MW0h4GBoQdCMz5gMGRkAooysDIzwABIgIEJyglIc00BUrb%2F%2FzP9%2Bi%2FEEMU0C2QKAyNIDgDz7Av7AAB42tWNwQmAMAxFX9rqQRzCAVxBEDyI4GjO5QTdpyZpL168%2B8v7hVeSAh0QlVkZlBPBcqkV97H5xKR30mN%2BKaV2udvE6L1Sk%2By1oZvy5piXvDv2t%2BTDgR7EaOMStALvCN%2BJ%2FD4PP2cPmwAhAnkAAAAB%2F%2F8AAnjaPY%2BxbhNBEIZnZs%2B7NgQjcznHjuU99i74jB3Z4vZsc8I6g3woJQilcBDQRAoVSgMNiAcAqrjMK4QU9kuk4QFS0AUpNIgCIQqww56QKObXr1%2Bj%2F5sBAgWALToEBgI6M4TucC4s%2BBbOeO7zcM7IWJixLM5l8Vxw%2FDOcY5brkioFuuQrLHw9OaHDxZ6iCYAFCbyhKX4wnRbkoWAIPeUoJxOaLj7Sdja4laafxmOzf%2FELgO7TAVSgCj5sANgiLAtWRF%2BogdcYYVmHCfWiNq71deisct8L7Nc8UvmdlUbMscxH7op%2FzY2fP%2B6f%2FjjavPTuxdNKOaYDWWsvH408KdXwKF%2BNniXv29b%2Bk4mFNTBIeGhkarhVWDc3DpTQCd7B%2F9yBrUNJjqaXcnF%2B87ofPYh3i8FdjnV%2Br1bcjdubFcvFL8fHk86ymiopvTGeFzZa3aw7vfhNZ6a7DhLghh%2BwqNFr9PXAN6%2Bt2RoT%2FOedVYHo5IRk1GqynxQoflvhfudWk07JW3eX39%2B%2BwjqTTLlSNvXijK6kgZSXr9rd5d5ff0VatAAAeNpjYGRgYABivYYrefH8Nl8ZuJlfAEUYHrD6x8Po%2F9%2F%2F%2F2Z6zDQLyOVgYAKJAgBatQ0pAHjaY2BkYGCa9f83QxTThf%2Ff%2F89leswAFEEB7ADNfQhDAWwAIQAAAAABTQAAAtAAPgI5%2F%2FcCYgBQAoAARAAAACoAKgAqAEIAfgCsAOB42mNgZGBgYGdQZWBhAAEmIGZkAIk5MOiBBAAH1QCkAHjaNY5LCsIwFEWPf0UQR%2BJIsoGWGnEijruADjp3kBZBUojtMlyAQ3fqbY0JN%2B8k930CLKkY0a8xC7aRJxwoI89Y84o8l%2FORRtOV8jdDZs8Truwjz9jRRZ5rvylw1Hp7cCNA4erucRPkNHjaIQZlOAyWlEzxInn97c9nEnm9Mumk4sa3eRNqZ2yamYvxVX%2BeE5vYzMov1S7w5D4MMRyHxpQuPO%2BNN8dUl98AVMoXHykidAAAAHjaY2BiwA%2FYgZiRgYlBgZGJkZmRha3U0MXExBhCmUMoSwA5vQTkAAA%3D%29%20format%28%27woff%27%29%3B%7D%0D%0Atext.f0%20%7Bfont-family%3Anf0%3Bfont-size%3A9.96264px%7D%0D%0A%5D%5D%3E%0D%0A%3C%2Fstyle%3E%0D%0A%3Cg%20id%3D%27page1%27%3E%0D%0A%3Ctext%20class%3D%27f0%27%20x%3D%27-72.000004%27%20y%3D%27-59.077775%27%3E%F0%9D%91%83%3Ctspan%20x%3D%27-63.264741%27%3E%3D%3C%2Ftspan%3E%3Ctspan%20x%3D%27-51.80471%27%20y%3D%27-65.454542%27%3E%F0%9D%91%87%3C%2Ftspan%3E%3C%2Ftext%3E%0D%0A%3Crect%20x%3D%27-52.128493%27%20y%3D%27-61.987107%27%20height%3D%27.677391%27%20width%3D%277.322531%27%2F%3E%0D%0A%3Ctext%20class%3D%27f0%27%20x%3D%27-52.128493%27%20y%3D%27-52.701007%27%3E%F0%9D%91%89%3C%2Ftext%3E%0D%0A%3C%2Fg%3E%0D%0A%3C%2Fsvg%3E"
+title="P = \frac{T}{V}" style="display:block; margin: .5em auto;"
+alt="Image based on the LaTeX code:P = \frac{T}{V}" /></p>
+<div class="pre-render" data-zoom="4">
+<p>Imagify the following too <img
+src="data:image/svg+xml,%3C%3Fxml%20version%3D%271.0%27%20encoding%3D%27UTF-8%27%3F%3E%0D%0A%3Csvg%20version%3D%271.1%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20xmlns%3Axlink%3D%27http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%27%20width%3D%27108.776171pt%27%20height%3D%2777.395212pt%27%20viewBox%3D%27-72.000004%20-71.999997%2027.194043%2019.348803%27%3E%0D%0A%3Cstyle%20type%3D%27text%2Fcss%27%3E%0D%0A%3C%21%5BCDATA%5B%40font-face%7Bfont-family%3Anf0%3Bsrc%3Aurl%28data%3Aapplication%2Fx-font-woff%3Bbase64%2Cd09GRgABAAAAAAUkAA0AAAAABqwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABGRlRNAAABMAAAABoAAAAck8F9V09TLzIAAAFMAAAARgAAAFZVdWLYY21hcAAAAZQAAABoAAABkgAo%2F39jdnQgAAAB%2FAAAAAQAAAAEACECeWdhc3AAAAIAAAAACAAAAAj%2F%2FwADZ2x5ZgAAAggAAAGeAAABwKwyPdxoZWFkAAADqAAAADMAAAA2IgPiOGhoZWEAAAPcAAAAIAAAACQF0QJwaG10eAAAA%2FwAAAAcAAAAHAylAOpsb2NhAAAEGAAAABAAAAAQARgBsm1heHAAAAQoAAAAHwAAACAATQBWbmFtZQAABEgAAACxAAABCxfnSUZwb3N0AAAE%2FAAAACYAAABFT4LlL3jaY2BgYGQAgsvb7s0A0Q9Y%2FeNhNABNlwYnAAB42mNgZKpinMDAysDA1MW0h4GBoQdCMz5gMGRkAooysDIzwABIgIEJyglIc00BUrb%2F%2FzP9%2Bi%2FEEMU0C2QKAyNIDgDz7Av7AAB42tWNwQmAMAxFX9rqQRzCAVxBEDyI4GjO5QTdpyZpL168%2B8v7hVeSAh0QlVkZlBPBcqkV97H5xKR30mN%2BKaV2udvE6L1Sk%2By1oZvy5piXvDv2t%2BTDgR7EaOMStALvCN%2BJ%2FD4PP2cPmwAhAnkAAAAB%2F%2F8AAnjaPY%2BxbhNBEIZnZs%2B7NgQjcznHjuU99i74jB3Z4vZsc8I6g3woJQilcBDQRAoVSgMNiAcAqrjMK4QU9kuk4QFS0AUpNIgCIQqww56QKObXr1%2Bj%2F5sBAgWALToEBgI6M4TucC4s%2BBbOeO7zcM7IWJixLM5l8Vxw%2FDOcY5brkioFuuQrLHw9OaHDxZ6iCYAFCbyhKX4wnRbkoWAIPeUoJxOaLj7Sdja4laafxmOzf%2FELgO7TAVSgCj5sANgiLAtWRF%2BogdcYYVmHCfWiNq71deisct8L7Nc8UvmdlUbMscxH7op%2FzY2fP%2B6f%2FjjavPTuxdNKOaYDWWsvH408KdXwKF%2BNniXv29b%2Bk4mFNTBIeGhkarhVWDc3DpTQCd7B%2F9yBrUNJjqaXcnF%2B87ofPYh3i8FdjnV%2Br1bcjdubFcvFL8fHk86ymiopvTGeFzZa3aw7vfhNZ6a7DhLghh%2BwqNFr9PXAN6%2Bt2RoT%2FOedVYHo5IRk1GqynxQoflvhfudWk07JW3eX39%2B%2BwjqTTLlSNvXijK6kgZSXr9rd5d5ff0VatAAAeNpjYGRgYABivYYrefH8Nl8ZuJlfAEUYHrD6x8Po%2F9%2F%2F%2F2Z6zDQLyOVgYAKJAgBatQ0pAHjaY2BkYGCa9f83QxTThf%2Ff%2F89leswAFEEB7ADNfQhDAWwAIQAAAAABTQAAAtAAPgI5%2F%2FcCYgBQAoAARAAAACoAKgAqAEIAfgCsAOB42mNgZGBgYGdQZWBhAAEmIGZkAIk5MOiBBAAH1QCkAHjaNY5LCsIwFEWPf0UQR%2BJIsoGWGnEijruADjp3kBZBUojtMlyAQ3fqbY0JN%2B8k930CLKkY0a8xC7aRJxwoI89Y84o8l%2FORRtOV8jdDZs8Truwjz9jRRZ5rvylw1Hp7cCNA4erucRPkNHjaIQZlOAyWlEzxInn97c9nEnm9Mumk4sa3eRNqZ2yamYvxVX%2BeE5vYzMov1S7w5D4MMRyHxpQuPO%2BNN8dUl98AVMoXHykidAAAAHjaY2BiwA%2FYgZiRgYlBgZGJkZmRha3U0MXExBhCmUMoSwA5vQTkAAA%3D%29%20format%28%27woff%27%29%3B%7D%0D%0Atext.f0%20%7Bfont-family%3Anf0%3Bfont-size%3A9.96264px%7D%0D%0A%5D%5D%3E%0D%0A%3C%2Fstyle%3E%0D%0A%3Cg%20id%3D%27page1%27%3E%0D%0A%3Ctext%20class%3D%27f0%27%20x%3D%27-72.000004%27%20y%3D%27-59.077775%27%3E%F0%9D%91%83%3Ctspan%20x%3D%27-63.264741%27%3E%3D%3C%2Ftspan%3E%3Ctspan%20x%3D%27-51.80471%27%20y%3D%27-65.454542%27%3E%F0%9D%91%87%3C%2Ftspan%3E%3C%2Ftext%3E%0D%0A%3Crect%20x%3D%27-52.128493%27%20y%3D%27-61.987107%27%20height%3D%27.677391%27%20width%3D%277.322531%27%2F%3E%0D%0A%3Ctext%20class%3D%27f0%27%20x%3D%27-52.128493%27%20y%3D%27-52.701007%27%3E%F0%9D%91%89%3C%2Ftext%3E%0D%0A%3C%2Fg%3E%0D%0A%3C%2Fsvg%3E"
+title="P = \frac{T}{V}" style="border: 1px solid red;"
+alt="Image based on the LaTeX code:P = \frac{T}{V}" /></p>
+</div>
+</div>
+</body>
+</html>
