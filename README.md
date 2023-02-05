@@ -6,8 +6,8 @@ Imagify - Pandoc/Quarto filer convert LaTeX elements into images
 Lua filter to convert some or all LaTeX code in a document into 
 images. 
 
-[CI badge]: https://img.shields.io/github/workflow/status/dialoa/imagify/CI?logo=github
-[CI workflow]: https://github.com/dialoa/imagify/actions/workflows/ci.yaml
+[CI badge]: https://img.shields.io/github/actions/workflow/status/tarleb/lua-filter-template/ci.yaml?branch=main
+[CI workflow]: https://github.com/tarleb/lua-filter-template/actions/workflows/ci.yaml
 
 ## Overview
 
