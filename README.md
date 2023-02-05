@@ -50,6 +50,10 @@ Rendering options
 Regional options: Div/Span attributes
 Local options: RawBlock/RawInline attributes
 
+## CONVERTER
+
+dvisvgm: doesn't support lualatex-generated dvi well ('WARNING: font file ... not found).
+
 
 Usage
 ------------------------------------------------------------------

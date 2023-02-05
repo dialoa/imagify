@@ -8,6 +8,8 @@
 
 Pre-renders specified Math and Raw elements as images. 
 
+@todo reader user templates from metadata
+
 @note Rendering options are provided in the doc's metadata (global),
       as Div / Span attribute (regional), on a RawBlock/Inline (local).
       They need to be kept track of, then merged before imagifying.
@@ -35,7 +37,7 @@ local mediabag = pandoc.mediabag
 ---@field output_folder string directory for output
 ---@field output_folder_exists bool Internal variable to avoid repeated checks
 ---@field ligbs_path nil | string, path to Ghostscript library
----@field optionsForClass map of renderOptions for Span/Div classes 
+---@field optionsForClass map of renderOptions for specific Span/Div classes 
 --                            whose LaTeX elements are to be imagified.
 ---@field extensionForOutput map of image format (SVG or PDF) to use for some output formats.
 local filterOptions = {
@@ -43,9 +45,7 @@ local filterOptions = {
   libgs_path = nil,
   output_folder = '',
   output_folder_exists = false,
-  optionsForClass = {
-    imagify = {},
-  },
+  optionsForClass = {},
   extensionForOutput = {
     default = 'svg',
     html = 'svg',
@@ -58,34 +58,72 @@ local filterOptions = {
 }
 
 ---@class globalRenderOptions
----@field scope string 'manual', 'all', 'none', imagify all/no/selected elements.
+---The following fields, plus a number of Pandoc metadata
+---keys like header-includes, fontenc, colorlinks etc. 
+---See getRenderOptions() for details.
 ---@field force bool imagify even when targeting LaTeX
 ---@field embed bool whether to embed (if possible) or output as file
+---@field template string identifier of a Pandoc template (default 'default')
 ---@field pdf_engine string latex command to be used
+---@field converter string pdf/dvi to svg converter (default 'dvisvgm')
 ---@field zoom string to apply when converting pdf/dvi to svg
----@field header_includes string header includes (replace)
----@field add_to_header string header includes (append to those automatically computed)
 ---@field vertical_align string vertical align value (HTML output)
 ---@field block_style string style to apply to blockish elements (DisplayMath, RawBlock)
 local globalRenderOptions = {
   force = false,
   embed = true,
-  pdf_engine = 'xelatex',
+  template = 'default',
+  pdf_engine = 'latex',
+  converter = 'dvisvgm',
   zoom = '1.5',
-  header_includes = [[\usepackage{amsmath,amssymb}
-\usepackage{unicode-math}
-\setmathfont[]{STIX Two Math}
-]],
   vertical_align = 'baseline',
   block_style = 'display:block; margin: .5em auto;'
 }
 
+---@class Templates
+---Templates.id = { source = string, compiled = Template}
+---default key reserved for Pandoc's default template
+local Templates = {
+  default = {},
+}
+
 -- # Helper functions
+
+-- ## Debugging
+
+---message: send message to std_error
+---comment
+---@param type 'INFO'|'WARNING'|'ERROR'
+---@param text string error message
+local function message (type, text)
+    local level = {INFO = 0, WARNING = 1, ERROR = 2}
+    if level[type] == nil then type = 'ERROR' end
+    if level[PANDOC_STATE.verbosity] <= level[type] then
+        io.stderr:write('[' .. type .. '] Imagify: ' 
+            .. text .. '\n')
+    end
+end
 
 -- ## common Lua
 
----mergeMapInto: returns the result of merging a new map 
--- into an old one without modifying the old one. Not recursive.
+---tfind: finds a value in an array
+---comment
+---@param tbl table
+---@return result number|false 
+local function tfind(tbl, needle)
+  local i = 0
+  for _,v in ipairs(tbl) do
+    i = i + 1
+    if v == needle then
+      return i
+    end
+  end
+  return false
+end 
+
+
+---mergeMapInto: returns a new map resulting from merging a new one
+-- into an old one. 
 ---@param new table|nil map with overriding values
 ---@param old table|nil map with original values
 ---@return table result new map with merged values
@@ -109,11 +147,11 @@ local function outputIsLaTeX()
 end
 
 --- ensureList: ensures an object is a pandoc.List.
----@param obj any
+---@param obj any|nil
 local function ensureList(obj)
 
   return pandoctype(obj) == 'List' and obj
-    or pandoc.List:new(obj) 
+    or pandoc.List:new{obj} 
 
 end
 
@@ -252,7 +290,7 @@ end
 
 -- ## Smart imagifying functions
 
----useTikZ: tell whether a source contains a TikZ picture
+---usesTikZ: tell whether a source contains a TikZ picture
 ---@param source string LaTeX source
 ---@return bool result
 local function usesTikZ(source)
@@ -275,24 +313,24 @@ end
 --    pdf_engine = pdf engine, 'latex', 'pdflatex', 'xelatex', 'xetex', '' etc. 
 ---@return string filepath of the output
 local function runLaTeX(source, options)
-	local options = options or {}
+	options = options or {}
   local format = options.format or 'pdf'
   local pdf_engine = options.pdf_engine or 'latex'
-  local xetex = pdf_engine:match('^xe')
   local outfile = stripExtension(source, {'tex','latex'})
-  local ext = xetex and format == 'dvi' and '.xdv'
+  local ext = pdf_engine == 'xelatex' and format == 'dvi' and '.xdv'
                 or '.'..format
-  local cmd_opts = pandoc.List:new({'--interaction=nonstopmode', source})
+  local cmd_opts = pandoc.List:new({
+    '--interaction=nonstopmode',
+    '-'..pdf_engine, 
+    source})
 
-  if xetex then
-    if format == 'dvi' then
-      cmd_opts:insert(1, '--no-pdf')
-    end
-  else
+  -- xelatex doesn't accept `output-format`,
+  -- generates both .pdf and .xdv
+  if pdf_engine ~= 'xelatex' then
     cmd_opts:insert(1, '--output-format='..format)
   end
 
-  pandoc.pipe(pdf_engine, cmd_opts, '')
+  pandoc.pipe('latexmk', cmd_opts, '')
 
   return outfile..ext
 
@@ -321,11 +359,12 @@ local function toSVG(source, options)
 		source
 	})
 
-  -- @TODO doesn't work, why?
+  -- @TODO doesn't work on my machine, why?
   if filterOptions.libgs_path and filterOptions.libgs_path ~= '' then
     cmd_opts:insert('--libgs='..filterOptions.libgs_path)
   end
 
+  -- note "Ghostcript required to process PDF files"
   if source_format == 'pdf' then
     cmd_opts:insert('--pdf')
   end
@@ -375,64 +414,113 @@ end
 
 -- # Main filter functions
 
--- ## Functions to read and compile options
+-- ## Functions to read options
 
----buildDefaultTeXPreamble: build a default TeX preamble.
----@param meta Pandoc.Meta
----@return string preamble LaTeX preamble, `\documentclass` included
-local function buildDefaultTeXPreamble(meta)
-	local template = pandoc.template.compile(preambleTemplate)
+---getFilterOptions: read render options
+---returns a map:
+---   scope: 'all'|'manual'|'none'|nil
+---   libgs_path: string
+---   output_folder: string
+---@param opts table options map from meta.imagify
+---@return table result map of options
+local function getFilterOptions(opts)
+  local result = {}
+  local keys = {'scope', 'libgs-path', 'output-folder'}
 
-	return pandoc.write(pandoc.Pandoc({},meta), 'latex', {template = template})
+  for _,key in ipairs(keys) do
+    opts[key] = opts[key] and stringify(opts[key]) or nil
+  end
+
+  result.scope = opts.scope and (
+    opts.scope == 'all' and 'all'
+    or (opts.scope == 'selected' or opts.scope == 'manual') and 'manual'
+    or opts.scope == 'none' and 'none'
+  ) or nil
+
+  result.libgs_path = opts['libgs-path'] and opts['libgs-path']
+
+  result.output_folder = opts['output-folder'] and opts['output-folder']
+
+  return result
 
 end
 
 ---getRenderOptions: read render options
 ---@param opts table options map, from doc metadata or elem attributes
----@param table renderOptions map of options
+---@return table result renderOptions map of options
 local function getRenderOptions(opts)
   local result = {}
-
-  -- string values
-  -- convert "xx-yy" to "xx_yy" keys
-  local renderStringKeys = { 
+  local renderBooleanlKeys = {
+    'force',
+    'embed',
+    'keep-sources',
+  }
+  local renderStringKeys = {
+    'pdf-engine',
+    'converter',
     'zoom', 
-    'pdf-engine', 
     'vertical-align',
     'block-style',
   }
+  -- Pandoc metadata variables used by the LaTeX template
+  local renderMetaKeys = {
+    'header-includes',
+    'mathspec',
+    'fontenc',
+    'fontfamily',
+    'fontfamilyoptions',
+    'fontsize',
+    'mainfont', 'sansfont', 'monofont', 'mathfont', 'CJKmainfont',
+    'mainfontoptions', 'sansfontoptions', 'monofontoptions', 
+    'mathfontoptions', 'CJKoptions',
+    'microtypeoptions',
+    'colorlinks',
+    'boxlinks',
+    'linkcolor', 'filecolor', 'citecolor', 'urlcolor', 'toccolor',
+    -- 'links-as-note': not visible in standalone LaTeX class
+    'urlstyle',
+  }
+  checks = {
+    pdf_engine = {'latex', 'xelatex', 'lualatex'},
+    converter = {'dvisvgm'},
+  }
 
+  -- boolean values
+  -- convert "xx-yy" to "xx_yy" keys
+  for _,key in ipairs(renderBooleanlKeys) do
+    if opts[key] and pandoctype(opts[key]) == 'boolean' then
+      result[key:gsub('-','_')] = opts[key]
+    end
+  end
+  
+  -- string values
+  -- convert "xx-yy" to "xx_yy" keys
   for _,key in ipairs(renderStringKeys) do
     if opts[key] then
       result[key:gsub('-','_')] = stringify(opts[key])
     end
   end
 
-  return result
-
-end
-
----normalizeOptionsMap: normalize user metadata options.
----@param map Inlines|Blocks|pandoc.MetaMap value of meta.imagify
----@return map userOptions
-local function normalizeOptionsMap(map)
-  -- keys that must have a string value
-  local stringKeys = {'scope', 'libgs-path', 'output-folder'}
-  
-  -- if only a string, assume it's a `scope` value
-  if pandoctype(map) == 'Inlines' or 
-    pandoctype(map) == 'Blocks' 
-    or pandoctype(map) == 'string' then
-      return { scope = stringify(map) }
-  end
-
-  for _,key in ipairs(stringKeys) do
-    if map[key] and type(map[key]) ~= 'string' then
-      map[key] = stringify(map[key]) 
+  -- meta values
+  -- do not change the key names
+  for _,key in ipairs(renderMetaKeys) do
+    if opts[key] then
+      result[key] = opts[key]
     end
   end
 
-  return map
+  -- apply checks
+  for key, accepted_vals in pairs(checks) do
+    if result[key] and not tfind(accepted_vals, result[key]) then
+      message('WARNING', 'Option '..key..'has an invalid value: '
+        ..result[key]..". I'm ignoring it."
+    )
+      result[key] = nil
+    end
+  end
+
+  return result
+
 end
 
 ---readImagifyClasses: read user's specification of custom classes
@@ -441,8 +529,9 @@ end
 -- We update `filterOptions.classes` accordingly.
 ---@param opts pandoc.List|pandoc.MetaMap|string
 local function readImagifyClasses(opts)
+  -- ensure it's a list or table
   if pandoctype(opts) ~= 'List' and pandoctype(opts) ~= 'table' then
-    opts = pandoc.List:new({ stringify(opts) })
+    opts = pandoc.List:new({ opts })
   end
 
   if pandoctype(opts) == 'List' then
@@ -459,28 +548,49 @@ local function readImagifyClasses(opts)
 
 end
 
---- init: read metadata options.
+---init: read metadata options.
 ---@param meta pandoc.Meta doc's metadata
 local function init(meta)
-  userOptions = meta.imagify and normalizeOptionsMap(meta.imagify)
+  -- If `meta.imagify` isn't a map assume it's a `scope` value 
+  local userOptions = meta.imagify 
+    and (pandoctype(meta.imagify) == 'table' and meta.imagify
+      or {scope = stringify(meta.imagify)}
+    ) 
     or {}
+  local rootKeysUsed = {
+    'header-includes',
+    'mathspec',
+    'fontenc',
+    'fontfamily',
+    'fontfamilyoptions',
+    'fontsize',
+    'mainfont', 'sansfont', 'monofont', 'mathfont', 'CJKmainfont',
+    'mainfontoptions', 'sansfontoptions', 'monofontoptions', 
+    'mathfontoptions', 'CJKoptions',
+    'microtypeoptions',
+    'colorlinks',
+    'boxlinks',
+    'linkcolor', 'filecolor', 'citecolor', 'urlcolor', 'toccolor',
+    -- 'links-as-note': no footnotes in standalone LaTeX class
+    'urlstyle',
+  }
+  
+  -- pass relevant root options unless overriden in meta.imagify
+  for _,key in ipairs(rootKeysUsed) do
+    if meta[key] and not userOptions[key] then 
+      userOptions[key] = meta[key]
+    end
+  end
 
-  filterOptions.scope = userOptions.scope == 'all' and 'all'
-        or userOptions.scope == 'none' and 'none'
-        or userOptions.scope == 'selected' and 'manual' -- alias
-        or 'manual'
+  filterOptions = mergeMapInto(
+    getFilterOptions(userOptions),
+    filterOptions
+  )
 
-  filterOptions.force = userOptions.force and userOptions.force ~= 'false'
-        and userOptions.force ~= 'no'
-        or false
-
-  filterOptions.libgs_path = userOptions['libgs-path'] and userOptions['libgs-path']
-        or nil
-
-  filterOptions.output_folder = userOptions['output-folder'] and userOptions['output-folder']
-
-  globalRenderOptions = mergeMapInto(getRenderOptions(userOptions),
-    globalRenderOptions)
+  globalRenderOptions = mergeMapInto(
+    getRenderOptions(userOptions),
+    globalRenderOptions
+  )
 
   if userOptions.classes then
     filterOptions.classes = readImagifyClasses(userOptions.classes)
@@ -489,47 +599,52 @@ local function init(meta)
 
 end
 
--- ## Functions to handle preamble templates
+-- ## Functions to convert images
 
-local function addTemplate(source)
-  templates:insert({ source = source, compiled = nil})
-end
-
-local function getTemplate(n)
-  if templates[n] then
-    templates[n].compiled = templates[n].compiled
-      or pandoc.template.compile(templates[n].source)
-    return templates[n].compiled
-  else
+---getTemplate: get a compiled template
+---@param id string template identifier (key of Templates)
+---@return tpl Template|nil result
+local function getTemplate(id)
+  if not Templates[id] then
     return nil
   end
-end
 
--- ## Functions to convert images
+  -- ensure there's a non-empty source, otherwise return nil
+
+  -- special case: default template, get source from Pandoc
+  if id == 'default' and not Templates[id].source then
+    Templates[id].source = pandoc.template.default('latex')
+  end
+
+  if not Templates[id].source or Templates[id].source == '' then
+    return nil
+  end
+
+  -- compile if needed and return
+
+  if not Templates[id].compiled then
+    Templates[id].compiled = pandoc.template.compile(
+      Templates[id].source)
+  end
+
+  return Templates[id].compiled
+
+end
 
 ---buildTeXDoc: turns LaTeX element into a LaTeX doc source.
 ---@param text string LaTeX code
 ---@param renderOptions table render options
 ---@param elemType string 'InlineMath', 'DisplayMath', 'RawInline', 'RawBlock'
 local function buildTeXDoc(text, renderOptions, elemType)
-  local elemType = elemType and elemType or 'InlineMath'
-  local text = text or ''
-  local renderOptions = renderOptions or {}
-  local classopts = ''
-  local preamble = renderOptions.header_includes or ''
-  local before = ''
-  local after = ''
-  local template = [[\documentclass[%s]{standalone}
-    %s
-    \begin{document}
-    %s
-    %s
-    %s
-    \end{document}
-  ]]
+  elemType = elemType and elemType or 'InlineMath'
+  text = text or ''
+  renderOptions = renderOptions or {}
+  local template = renderOptions.template or 'default'
+  local converter = renderOptions.converter or 'dvisvgm'
+  local doc = nil
   
   -- wrap DisplayMath and InlineMath in math mode
-  -- for display math we use \displaystyle 
+  -- for display math we must use \displaystyle 
   --  see <https://tex.stackexchange.com/questions/50162/how-to-make-a-standalone-document-with-one-equation>
   if elemType == 'DisplayMath' then
     text = '$\\displaystyle\n'..text..'$'
@@ -537,7 +652,32 @@ local function buildTeXDoc(text, renderOptions, elemType)
     text = '$'..text..'$'
   end
 
-  return template:format(classopts, preamble, before, text, after)
+  doc = pandoc.Pandoc(
+    pandoc.RawBlock('latex', text),
+    pandoc.Meta(renderOptions)
+  )
+
+  -- modify the doc's meta values as required
+  --@TODO set class option class=...
+  --Stanlone tikz needs \standaloneenv{tikzpicture}
+  local headinc = ensureList(doc.meta['header-includes'])
+  local classopt = pandoc.List:new()
+  if converter == 'dvisvgm' then
+    classopt:insert(pandoc.Str('dvisvgm'))
+  end
+  if usesTikZ(text) then
+    headinc:insert(pandoc.RawBlock('latex', '\\usepackage{tikz}'))
+    classopt:insert{
+      pandoc.Str('tikz')
+    }
+  end
+  doc.meta['header-includes'] = #headinc > 0 and headinc or nil
+  doc.meta.classoption = #classopt > 0 and classopt or nil
+  doc.meta.documentclass = 'standalone'
+  
+  return pandoc.write(doc, 'latex', {
+    template = getTemplate(template),
+  })
 
 end
 
@@ -557,40 +697,37 @@ end
 ---@param source string LaTeX source document
 ---@param renderOptions table rendering options
 ---@return string result file contents or filepath or ''.
---- latexToImage: convert LaTeX to image.
--- The image can be exported as SVG string (`raw`), or as file in 
--- the mediabag (`media`) the filesystem (`file`). 
--- @param source string LaTeX source document
--- @param options table of conversion options.
---      export = string 'mediabag' or 'file' or 'raw'
---      format = string, 'svg' or 'pdf'
---      filepath = string, output file path
---      pdf_engine = 'latex', 'pdflatex', 'xelatex', 'lualatex'. 
---     }
--- @return string filepath if file, svg code if raw
 local function latexToImage(source, renderOptions)
-	local options = renderOptions or {}
+  local options = renderOptions or {}
   local ext = filterOptions.extensionForOutput[FORMAT]
     or filterOptions.extensionForOutput.default
   local embed = options.embed and ext == 'svg' and FORMAT:match('html') or false
   local pdf_engine = options.pdf_engine or 'latex'
   local latex_out_format = ext == 'svg' and 'dvi' or 'pdf'
   local folder, folderAbs, file, fileAbs = '', '', '', ''
+  local keep_sources = options.keep_sources or false
   local result = ''
 
-  -- it not embedding prepare folder and file names
+  -- if we output files prepare folder and file names
   -- we need absolute paths to move things out of the temp dir
-  if not embed then
+  if not embed or keep_sources then
     folder = filterOptions.output_folder or ''
     folderAbs = path.is_absolute(folder) and folder
       or path.join{ system.get_working_directory(), folder}
-    file = createUniqueName(source, renderOptions)..'.'..ext
-    fileAbs = path.join{folderAbs, file}
-    file = path.join{folder, file}
+    filename = createUniqueName(source, renderOptions)
+    fileAbs = path.join{folderAbs, filename..'.'..ext}
+    file = path.join{folder, filename..'.'..ext}
+    texfileAbs = path.join{folderAbs, filename..'.tex'}
 
     -- don't regenerate files that already exist
-    if fileExists(file) then 
+    if not embed and fileExists(file) then 
       return file
+    end
+
+    -- ensure the output folder exists (only once)
+    if not filterOptions.output_folder_exists then
+      ensureFolderExists(folderAbs)
+      filterOptions.output_folder_exists = true
     end
 
   end
@@ -600,11 +737,18 @@ local function latexToImage(source, renderOptions)
 
       	writeToFile(source, 'source.tex')
 
+        -- keep_sources is for debugging, do it before LaTeX runs
+        if keep_sources then
+          writeToFile(source, texfileAbs)
+        end
+
         -- result = 'source.dvi'|'source.xdv'|'source.pdf'
 				result = runLaTeX('source.tex', {
 					format = latex_out_format,
 					pdf_engine = pdf_engine,
 				})
+
+        -- further conversions of dvi/pdf?
 
         if ext == 'svg' then
 
@@ -614,6 +758,8 @@ local function latexToImage(source, renderOptions)
           })
 
         end
+
+        -- embed or save
 
         if embed then
 
@@ -625,11 +771,6 @@ local function latexToImage(source, renderOptions)
           result = 'data:image/svg+xml,'..urlEncode(result)
 
         else
-
-          if not filterOptions.output_folder_exists then
-            ensureFolderExists(folderAbs)
-            filterOptions.output_folder_exists = true
-          end
 
           os.rename(result, fileAbs)
           result = file
@@ -721,7 +862,7 @@ local function scanContainer(elem, renderOptions)
   local class = imagifyClass(elem)
 
   if class then
-    -- apply class rendering options
+    -- create new rendering options by applying the class options
     local opts = mergeMapInto(filterOptions.optionsForClass[class], 
                     renderOptions)
     -- apply any locally specified rendering options
