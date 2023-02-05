@@ -16,14 +16,12 @@ SOURCE_FILES = $(SOURCE_MAIN:%=$(SOURCE_DIR)%.lua) $(SOURCE_MODULES:%=$(SOURCE_D
 # Allow to use a different pandoc binary, e.g. when testing.
 PANDOC ?= pandoc
 # Allow to adjust the diff command if necessary
-DIFF = diff
+DIFF ?= diff
 # Use a POSIX sed with ERE ('v' is specific to GNU sed)
 SED := sed $(shell sed v </dev/null >/dev/null 2>&1 && echo " --posix") -E
 
 # Pandoc formats for test outputs
-ifeq "$(FORMAT)" ""
-FORMAT = html
-endif
+FORMAT ?= html
 
 # Directory containing the Quarto extension
 QUARTO_EXT_DIR = _extensions/$(FILTER_NAME)
@@ -95,11 +93,15 @@ _check_luacc:
 # The automatic variable `$<` refers to the first dependency
 # (i.e., the filter file).
 # let `test` be a PHONY target so that it is run each time it's called.
+# NB: not piping into DIFF. We need to set a --output values for
+# paths relative to output to be computed as with the generate target.
 .PHONY: test
 test: $(FILTER_FILE) test/input.md test/test.yaml
 	@for ext in $(FORMAT) ; do \
-		$(PANDOC) --defaults test/test.yaml --to $$ext | \
-		$(DIFF) test/expected.$$ext - ; \
+		$(PANDOC) --defaults test/test.yaml --to $$ext \
+			--output test/out.$$ext; \
+		$(DIFF) test/expected.$$ext test/out.$$ext; \
+		rm test/out.$$ext; \
 	done
 
 ## Generate the expected output
@@ -110,7 +112,7 @@ test: $(FILTER_FILE) test/input.md test/test.yaml
 generate: build $(FILTER_FILE) test/input.md test/test.yaml
 	@for ext in $(FORMAT) ; do \
 		$(PANDOC) --defaults test/test.yaml --to $$ext \
-		--output test/expected.$$ext ; \
+		--output test/expected.$$ext ;\
 	done
 
 #
@@ -141,13 +143,13 @@ endif
 website: _site/index.html _site/$(FILTER_FILE)
 
 _site/index.html: README.md test/input.md $(FILTER_FILE) .tools/docs.lua \
-		_site/output.md _site/style.css
+		_site/output.html _site/style.css
 	@mkdir -p _site
 	$(PANDOC) \
 	    --standalone \
 	    --lua-filter=.tools/docs.lua \
 	    --metadata=sample-file:test/input.md \
-	    --metadata=result-file:_site/output.md \
+	    --metadata=result-file:_site/output.html \
 	    --metadata=code-file:$(FILTER_FILE) \
 	    --css=style.css \
 	    --toc \
@@ -159,11 +161,10 @@ _site/style.css:
 	    --output $@ \
 	    'https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/light.css'
 
-_site/output.md: $(FILTER_FILE) test/input.md test/test.yaml
+_site/output.html: $(FILTER_FILE) test/input.md test/test.yaml
 	@mkdir -p _site
 	$(PANDOC) \
-	    --defaults=test/test.yaml \
-	    --to=markdown \
+	    --defaults=test/website.yaml \
 	    --output=$@
 
 _site/$(FILTER_FILE): $(FILTER_FILE)

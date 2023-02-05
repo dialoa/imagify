@@ -34,6 +34,7 @@ local mediabag = pandoc.mediabag
 
 ---@class filterOptions filter's general setup.
 ---@field scope string 'manual', 'all', 'none', imagify all/no/selected elements.
+---@field lazy boolean do not regenerate image files if they exist (default true)
 ---@field output_folder string directory for output
 ---@field output_folder_exists bool Internal variable to avoid repeated checks
 ---@field ligbs_path nil | string, path to Ghostscript library
@@ -42,6 +43,7 @@ local mediabag = pandoc.mediabag
 ---@field extensionForOutput map of image format (SVG or PDF) to use for some output formats.
 local filterOptions = {
   scope = 'manual',
+  lazy = true,
   libgs_path = nil,
   output_folder = '',
   output_folder_exists = false,
@@ -319,15 +321,22 @@ local function runLaTeX(source, options)
   local outfile = stripExtension(source, {'tex','latex'})
   local ext = pdf_engine == 'xelatex' and format == 'dvi' and '.xdv'
                 or '.'..format
+  -- additional options must come *after* -<engine>
+  -- and *before* source
   local cmd_opts = pandoc.List:new({
-    '--interaction=nonstopmode',
     '-'..pdf_engine, 
+    '--interaction=nonstopmode',
     source})
+  
+  -- latexmk silent mode
+  if PANDOC_STATE.verbosity == 'ERROR' then
+    cmd_opts:insert(2, '-silent')
+  end
 
   -- xelatex doesn't accept `output-format`,
   -- generates both .pdf and .xdv
   if pdf_engine ~= 'xelatex' then
-    cmd_opts:insert(1, '--output-format='..format)
+    cmd_opts:insert(2, '--output-format='..format)
   end
 
   pandoc.pipe('latexmk', cmd_opts, '')
@@ -425,9 +434,16 @@ end
 ---@return table result map of options
 local function getFilterOptions(opts)
   local result = {}
-  local keys = {'scope', 'libgs-path', 'output-folder'}
+  local stringKeys = {'scope', 'libgs-path', 'output-folder'}
+  local boolKeys = {'lazy'}
 
-  for _,key in ipairs(keys) do
+  for _,key in ipairs(boolKeys) do
+    if opts[key] ~= nil and pandoctype(opts[key]) == 'boolean' then
+      result[key] = opts[key]
+    end
+  end
+
+  for _,key in ipairs(stringKeys) do
     opts[key] = opts[key] and stringify(opts[key]) or nil
   end
 
@@ -481,14 +497,14 @@ local function getRenderOptions(opts)
     'urlstyle',
   }
   checks = {
-    pdf_engine = {'latex', 'xelatex', 'lualatex'},
+    pdf_engine = {'latex', 'pdflatex', 'xelatex', 'lualatex'},
     converter = {'dvisvgm'},
   }
 
   -- boolean values
   -- convert "xx-yy" to "xx_yy" keys
   for _,key in ipairs(renderBooleanlKeys) do
-    if opts[key] and pandoctype(opts[key]) == 'boolean' then
+    if opts[key] ~= nil and pandoctype(opts[key]) == 'boolean' then
       result[key:gsub('-','_')] = opts[key]
     end
   end
@@ -636,6 +652,8 @@ end
 ---@param renderOptions table render options
 ---@param elemType string 'InlineMath', 'DisplayMath', 'RawInline', 'RawBlock'
 local function buildTeXDoc(text, renderOptions, elemType)
+  local endFormat = filterOptions.extensionForOutput[FORMAT]
+    or filterOptions.extensionForOutput.default
   elemType = elemType and elemType or 'InlineMath'
   text = text or ''
   renderOptions = renderOptions or {}
@@ -662,15 +680,23 @@ local function buildTeXDoc(text, renderOptions, elemType)
   --Stanlone tikz needs \standaloneenv{tikzpicture}
   local headinc = ensureList(doc.meta['header-includes'])
   local classopt = pandoc.List:new()
-  if converter == 'dvisvgm' then
+
+  -- Standalone class `dvisvgm` option: make output file
+  -- dvisvgm-friendly (esp TikZ images).
+  -- Not compatible with pdflatex
+  if endFormat == 'svg' and converter == 'dvisvgm' then
     classopt:insert(pandoc.Str('dvisvgm'))
   end
+  
+  -- The standalone class option `tikz` needs to be activated
+  -- to avoid an empty page of output.
   if usesTikZ(text) then
     headinc:insert(pandoc.RawBlock('latex', '\\usepackage{tikz}'))
     classopt:insert{
       pandoc.Str('tikz')
     }
   end
+
   doc.meta['header-includes'] = #headinc > 0 and headinc or nil
   doc.meta.classoption = #classopt > 0 and classopt or nil
   doc.meta.documentclass = 'standalone'
@@ -691,7 +717,6 @@ local function createUniqueName(source, renderOptions)
     '|Zoom:'..renderOptions.zoom)
 end
 
-
 ---latexToImage: convert LaTeX to image.
 --  The image can be exported as SVG string or as a SVG or PDF file.
 ---@param source string LaTeX source document
@@ -701,17 +726,24 @@ local function latexToImage(source, renderOptions)
   local options = renderOptions or {}
   local ext = filterOptions.extensionForOutput[FORMAT]
     or filterOptions.extensionForOutput.default
-  local embed = options.embed and ext == 'svg' and FORMAT:match('html') or false
+  local lazy = filterOptions.lazy
+  local embed = options.embed
+    and ext == 'svg' and FORMAT:match('html') and true 
+    or false
   local pdf_engine = options.pdf_engine or 'latex'
   local latex_out_format = ext == 'svg' and 'dvi' or 'pdf'
-  local folder, folderAbs, file, fileAbs = '', '', '', ''
   local keep_sources = options.keep_sources or false
+  local folder = filterOptions.output_folder or ''
+  local jobFolder = PANDOC_STATE.output_file 
+    and path.directory(PANDOC_STATE.output_file)
+    or system.get_working_directory()
+  local folderAbs, file, fileAbs, texfileAbs = '', '', '', ''
+  local fileRelativeToJob = ''
   local result = ''
 
   -- if we output files prepare folder and file names
   -- we need absolute paths to move things out of the temp dir
   if not embed or keep_sources then
-    folder = filterOptions.output_folder or ''
     folderAbs = path.is_absolute(folder) and folder
       or path.join{ system.get_working_directory(), folder}
     filename = createUniqueName(source, renderOptions)
@@ -719,15 +751,20 @@ local function latexToImage(source, renderOptions)
     file = path.join{folder, filename..'.'..ext}
     texfileAbs = path.join{folderAbs, filename..'.tex'}
 
-    -- don't regenerate files that already exist
-    if not embed and fileExists(file) then 
-      return file
-    end
-
     -- ensure the output folder exists (only once)
     if not filterOptions.output_folder_exists then
       ensureFolderExists(folderAbs)
       filterOptions.output_folder_exists = true
+    end
+
+    -- path to the image relative to document output
+    jobFolder = path.is_absolute(jobFolder) and jobFolder
+      or path.join{ system.get_working_directory(), jobFolder}
+    fileRelativeToJob = path.make_relative(fileAbs, jobFolder)
+
+    -- if lazy, don't regenerate files that already exist
+    if not embed and lazy and fileExists(fileAbs) then 
+      return fileRelativeToJob
     end
 
   end
@@ -773,9 +810,9 @@ local function latexToImage(source, renderOptions)
         else
 
           os.rename(result, fileAbs)
-          result = file
+          result = fileRelativeToJob
 
-				end
+        end
 
     end)
   end)

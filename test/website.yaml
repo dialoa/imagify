@@ -1,17 +1,16 @@
 input-files: ["test/input.md"]
+output-file: _site/output.html
 standalone: true
 filters:
   - {type: lua, path: imagify.lua}
 metadata:
   imagify:
     scope: all
-    embed: false
-    lazy: true
-    output-folder: test/_imagify_files
+    embed: true
     pdf-engine: latex
     keep-sources: false
     zoom: 1.5
     classes: 
       pre-render:
           zoom: 4 # will show if it's not overriden
-          block-style: "border: 1px solid red;"
+          block-style: "border: 1px dotted blue;"

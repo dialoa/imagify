@@ -40,7 +40,8 @@ end
 
 local function result_block_html(filename)
   local html = '<iframe width=100% height=720px '
-    ..'src="'..filename..'" sandbox>\n'
+    -- ..'src="'..filename..'" sandbox>\n'
+    ..'src="'..filename..'">\n' -- non-sandbox to display linked images
     ..'<p><a href="'..filename..'">Click to see file</a></p>\n'
     ..'</iframe>'
   return pandoc.RawBlock('html', html)
