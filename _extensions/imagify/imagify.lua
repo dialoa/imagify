@@ -159,6 +159,17 @@ local function tfind(tbl, needle)
   return false
 end 
 
+---concatStrings: concatenate a list of strings into one.
+---@param list string<> list of strings
+---@param separator string separator (optional)
+local function concatStrings(list, separator)
+  separator = separator and separator or ''
+  local result = ''
+  for _,str in ipairs(list) do
+    result = result..separator..str
+  end
+  return result
+end
 
 ---mergeMapInto: returns a new map resulting from merging a new one
 -- into an old one. 
@@ -249,6 +260,15 @@ local function fileExists(filepath)
   else 
     return false
   end
+end
+
+---makeAbsolute: make filepath absolute
+---@param filepath string file path
+---@param root string|nil if relative, use this as root (default working dir) 
+local function makeAbsolute(filepath, root)
+  root = root or system.get_working_directory()
+  return path.is_absolute(filepath) and filepath
+    or path.join{ root, filepath}
 end
 
 ---folderExists: checks whether a folder exists
@@ -349,7 +369,7 @@ end
 ---@param options table options
 --    format = output format, 'dvi' or 'pdf',
 --    pdf_engine = pdf engine, 'latex', 'pdflatex', 'xelatex', 'xetex', '' etc. 
----@return string filepath of the output
+---@return string|nil filepath path to the output file if successful
 local function runLaTeX(source, options)
 	options = options or {}
   local format = options.format or 'pdf'
@@ -357,27 +377,38 @@ local function runLaTeX(source, options)
   local outfile = stripExtension(source, {'tex','latex'})
   local ext = pdf_engine == 'xelatex' and format == 'dvi' and '.xdv'
                 or '.'..format
-  -- additional options must come *after* -<engine>
-  -- and *before* source
-  local cmd_opts = pandoc.List:new({
-    '-'..pdf_engine, 
+  -- additional options must come *after* -<engine> and *before* <source>
+  local cmd = pandoc.List:new({
+    'latexmk -'..pdf_engine, 
     '--interaction=nonstopmode',
     source})
+  local success = ''
   
   -- latexmk silent mode
   if PANDOC_STATE.verbosity == 'ERROR' then
-    cmd_opts:insert(2, '-silent')
+    cmd:insert(2, '-silent')
   end
 
   -- xelatex doesn't accept `output-format`,
   -- generates both .pdf and .xdv
   if pdf_engine ~= 'xelatex' then
-    cmd_opts:insert(2, '--output-format='..format)
+    cmd:insert(2, '--output-format='..format)
   end
 
-  pandoc.pipe('latexmk', cmd_opts, '')
+  success = pcall(function (cmd)
+    os.execute(concatStrings(cmd))    
+  end)
 
-  return outfile..ext
+  if success then
+
+    return outfile..ext
+
+  else
+    message('ERROR', 'LaTeX generation failed. See LaTeX log below (if it exists).')
+    local log = readFile(outfile..'.log')
+    if log then print(log) end
+
+  end
 
 end
 
@@ -390,6 +421,7 @@ end
 -- @note Ghostcript library required to convert PDF files.
 --        See divsvgm manual for more details.
 local function toSVG(source, options)
+  if source == nil then return end
 	local options = options or {}
 	local outfile = options.output 
     or stripExtension(source, {'pdf', 'svg', 'xdv'})..'.svg'
@@ -514,6 +546,10 @@ local function getRenderOptions(opts)
     'vertical-align',
     'block-style',
   }
+  local renderListKeys = {
+    'classoption',
+    'link',
+  }
   -- Pandoc metadata variables used by the LaTeX template
   local renderMetaKeys = {
     'header-includes',
@@ -550,6 +586,13 @@ local function getRenderOptions(opts)
   for _,key in ipairs(renderStringKeys) do
     if opts[key] then
       result[key:gsub('-','_')] = stringify(opts[key])
+    end
+  end
+
+  -- list values
+  for _,key in ipairs(renderListKeys) do
+    if opts[key] then
+      result[key:gsub('-','_')] = ensureList(opts[key])
     end
   end
 
@@ -715,7 +758,7 @@ local function buildTeXDoc(text, renderOptions, elemType)
   --@TODO set class option class=...
   --Stanlone tikz needs \standaloneenv{tikzpicture}
   local headinc = ensureList(doc.meta['header-includes'])
-  local classopt = pandoc.List:new()
+  local classopt = ensureList(doc.meta['classoption'])
 
   -- Standalone class `dvisvgm` option: make output file
   -- dvisvgm-friendly (esp TikZ images).
@@ -753,6 +796,27 @@ local function createUniqueName(source, renderOptions)
     '|Zoom:'..renderOptions.zoom)
 end
 
+---findTarget: find linked file and return the source
+-- and target for a `ln` command.
+---@param link string 
+---@return src string src of ln (must be a filename, no subdir)
+---@return tar string target of ln (absolute path)
+local function findTarget(link)
+  link = stringify(link)
+  local searchPath = pandoc.List:new{ '' }
+  local src, tar = nil, nil
+
+  for _, p in ipairs(searchPath) do
+    if fileExists(path.join{ p, link }) then
+      src = path.filename(link)
+      tar = makeAbsolute(path.join{ p, path.directory(link)})
+      break
+    end
+  end
+
+  return src, tar
+end
+
 ---latexToImage: convert LaTeX to image.
 --  The image can be exported as SVG string or as a SVG or PDF file.
 ---@param source string LaTeX source document
@@ -768,20 +832,32 @@ local function latexToImage(source, renderOptions)
     or false
   local pdf_engine = options.pdf_engine or 'latex'
   local latex_out_format = ext == 'svg' and 'dvi' or 'pdf'
+  local linkedFiles = options.link or {}
   local keep_sources = options.keep_sources or false
   local folder = filterOptions.output_folder or ''
-  local jobFolder = PANDOC_STATE.output_file 
-    and path.directory(PANDOC_STATE.output_file)
-    or system.get_working_directory()
+  local jobFolder = makeAbsolute(PANDOC_STATE.output_file 
+    and path.directory(PANDOC_STATE.output_file) or '')
   local folderAbs, file, fileAbs, texfileAbs = '', '', '', ''
   local fileRelativeToJob = ''
+  local symLinks = {}
   local result = ''
+
+  -- Find any files to symlink and populate symLinks
+  -- Look for them in working dir and sources dir 
+  for _,link in ipairs(linkedFiles) do
+    local src, tar = findTarget(link)
+    if target then
+      symLinks[src] = tar
+    else
+      message('WARNING', 'Could not find linked resource '..stringify(link)
+        ..'. Imagifying might break down.')
+    end
+  end
 
   -- if we output files prepare folder and file names
   -- we need absolute paths to move things out of the temp dir
   if not embed or keep_sources then
-    folderAbs = path.is_absolute(folder) and folder
-      or path.join{ system.get_working_directory(), folder}
+    folderAbs = makeAbsolute(folder)
     filename = createUniqueName(source, renderOptions)
     fileAbs = path.join{folderAbs, filename..'.'..ext}
     file = path.join{folder, filename..'.'..ext}
@@ -794,8 +870,6 @@ local function latexToImage(source, renderOptions)
     end
 
     -- path to the image relative to document output
-    jobFolder = path.is_absolute(jobFolder) and jobFolder
-      or path.join{ system.get_working_directory(), jobFolder}
     fileRelativeToJob = path.make_relative(fileAbs, jobFolder)
 
     -- if lazy, don't regenerate files that already exist
@@ -815,7 +889,12 @@ local function latexToImage(source, renderOptions)
           writeToFile(source, texfileAbs)
         end
 
-        -- result = 'source.dvi'|'source.xdv'|'source.pdf'
+        -- create symlinks
+        for src, tar in pairs(symLinks) do
+          os.execute('ln -s '..src..' '..tar)
+        end
+
+        -- result = 'source.dvi'|'source.xdv'|'source.pdf'|nil
 				result = runLaTeX('source.tex', {
 					format = latex_out_format,
 					pdf_engine = pdf_engine,
@@ -834,19 +913,23 @@ local function latexToImage(source, renderOptions)
 
         -- embed or save
 
-        if embed then
+        if result then
 
-          -- read svg contents and cleanup
-          result = "<?xml version='1.0' encoding='UTF-8'?>\n"
-            .. getSVGFromFile(result)
+          if embed then
 
-          -- URL encode
-          result = 'data:image/svg+xml,'..urlEncode(result)
+            -- read svg contents and cleanup
+            result = "<?xml version='1.0' encoding='UTF-8'?>\n"
+              .. getSVGFromFile(result)
 
-        else
+            -- URL encode
+            result = 'data:image/svg+xml,'..urlEncode(result)
 
-          os.rename(result, fileAbs)
-          result = fileRelativeToJob
+          else
+
+            os.rename(result, fileAbs)
+            result = fileRelativeToJob
+
+          end
 
         end
 
@@ -883,10 +966,11 @@ local function createImageElemFrom(text, src, renderOptions, elemType)
 
 end  
 
---- toImage: convert to pandoc.Image using specified rendering options.
+---toImage: convert to pandoc.Image using specified rendering options.
+---Return the original element if conversion failed.
 ---@param elem pandoc.Math|pandoc.RawInline|pandoc.RawBlock
 ---@param renderOptions table rendering options
----@return pandoc.Image elem
+---@return pandoc.Image|pandoc.Math|pandoc.RawInline|pandoc.RawBlock elem
 local function toImage(elem, renderOptions)
   local elemType = latexType(elem)
   local code = elem.text or ''
@@ -901,7 +985,11 @@ local function toImage(elem, renderOptions)
   result = latexToImage(doc, renderOptions)
 
   -- prepare Image element
-  img = createImageElemFrom(code, result, renderOptions, elemType)
+  if result then 
+    img = createImageElemFrom(code, result, renderOptions, elemType)
+  else
+    img = elem
+  end
  
   return elemType == 'RawBlock' and pandoc.Para(img)
     or img
