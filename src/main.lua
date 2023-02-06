@@ -35,6 +35,7 @@ local mediabag = pandoc.mediabag
 ---@class filterOptions filter's general setup.
 ---@field scope string 'manual', 'all', 'none', imagify all/no/selected elements.
 ---@field lazy boolean do not regenerate image files if they exist (default true)
+---@field no_html_embed boolean prohibit embedding in HTML (e.g. if extract-media is set) 
 ---@field output_folder string directory for output
 ---@field output_folder_exists bool Internal variable to avoid repeated checks
 ---@field ligbs_path nil | string, path to Ghostscript library
@@ -44,6 +45,7 @@ local mediabag = pandoc.mediabag
 local filterOptions = {
   scope = 'manual',
   lazy = true,
+  no_html_embed = false,
   libgs_path = nil,
   output_folder = '',
   output_folder_exists = false,
@@ -65,6 +67,7 @@ local filterOptions = {
 ---See getRenderOptions() for details.
 ---@field force bool imagify even when targeting LaTeX
 ---@field embed bool whether to embed (if possible) or output as file
+---@field debug bool debug mode (keep .tex source, crash on fail)
 ---@field template string identifier of a Pandoc template (default 'default')
 ---@field pdf_engine string latex command to be used
 ---@field converter string pdf/dvi to svg converter (default 'dvisvgm')
@@ -74,6 +77,7 @@ local filterOptions = {
 local globalRenderOptions = {
   force = false,
   embed = true,
+  debug = false,
   template = 'default',
   pdf_engine = 'latex',
   converter = 'dvisvgm',
@@ -346,7 +350,7 @@ local function runLaTeX(source, options)
     'latexmk -'..pdf_engine, 
     '--interaction=nonstopmode',
     source})
-  local success = ''
+  local success = true
   
   -- latexmk silent mode
   if PANDOC_STATE.verbosity == 'ERROR' then
@@ -359,18 +363,29 @@ local function runLaTeX(source, options)
     cmd:insert(2, '--output-format='..format)
   end
 
-  success = pcall(function (cmd)
-    os.execute(concatStrings(cmd))    
-  end)
+  -- run in protected mode unless we're debugging
+  cmd = concatStrings(cmd, ' ')
+  run = function() 
+    os.execute(cmd)
+  end
+
+  if debug then 
+    run()
+  else
+    success = pcall(run())
+  end
 
   if success then
 
     return outfile..ext
 
   else
-    message('ERROR', 'LaTeX generation failed. See LaTeX log below (if it exists).')
+    message('ERROR', 'LaTeX generation failed.')
     local log = readFile(outfile..'.log')
-    if log then print(log) end
+    if log then 
+      print('LaTeX log:')
+      print(log)
+    end
 
   end
 
@@ -385,7 +400,7 @@ end
 -- @note Ghostcript library required to convert PDF files.
 --        See divsvgm manual for more details.
 local function toSVG(source, options)
-  if source == nil then return end
+  if source == nil then return nil end
 	local options = options or {}
 	local outfile = options.output 
     or stripExtension(source, {'pdf', 'svg', 'xdv'})..'.svg'
@@ -501,7 +516,7 @@ local function getRenderOptions(opts)
   local renderBooleanlKeys = {
     'force',
     'embed',
-    'keep-sources',
+    'debug',
   }
   local renderStringKeys = {
     'pdf-engine',
@@ -578,6 +593,12 @@ local function getRenderOptions(opts)
     end
   end
 
+  -- Special cases
+  -- `embed` not possible with `extract-media` is set
+  if result.embed and filterOptions.no_html_embed then
+    result.embed = nil
+  end
+
   return result
 
 end
@@ -608,6 +629,8 @@ local function readImagifyClasses(opts)
 end
 
 ---init: read metadata options.
+-- Special cases:
+--    filterOptions.no_html_embed: Pandoc can't handle URL-embedded images when extract-media is on
 ---@param meta pandoc.Meta doc's metadata
 local function init(meta)
   -- If `meta.imagify` isn't a map assume it's a `scope` value 
@@ -646,6 +669,10 @@ local function init(meta)
     filterOptions
   )
 
+  if meta['extract-media'] and FORMAT:match('html') then
+    filterOptions.no_html_embed = true
+  end
+
   globalRenderOptions = mergeMapInto(
     getRenderOptions(userOptions),
     globalRenderOptions
@@ -654,7 +681,6 @@ local function init(meta)
   if userOptions.classes then
     filterOptions.classes = readImagifyClasses(userOptions.classes)
   end
-
 
 end
 
@@ -787,17 +813,17 @@ end
 ---@param renderOptions table rendering options
 ---@return string result file contents or filepath or ''.
 local function latexToImage(source, renderOptions)
-  local options = renderOptions or {}
+  local renderOptions = renderOptions or {}
   local ext = filterOptions.extensionForOutput[FORMAT]
     or filterOptions.extensionForOutput.default
   local lazy = filterOptions.lazy
-  local embed = options.embed
+  local embed = renderOptions.embed
     and ext == 'svg' and FORMAT:match('html') and true 
     or false
-  local pdf_engine = options.pdf_engine or 'latex'
+  local pdf_engine = renderOptions.pdf_engine or 'latex'
   local latex_out_format = ext == 'svg' and 'dvi' or 'pdf'
-  local linkedFiles = options.link or {}
-  local keep_sources = options.keep_sources or false
+  local linkedFiles = renderOptions.link or {}
+  local debug = renderOptions.debug or false
   local folder = filterOptions.output_folder or ''
   local jobFolder = makeAbsolute(PANDOC_STATE.output_file 
     and path.directory(PANDOC_STATE.output_file) or '')
@@ -820,7 +846,7 @@ local function latexToImage(source, renderOptions)
 
   -- if we output files prepare folder and file names
   -- we need absolute paths to move things out of the temp dir
-  if not embed or keep_sources then
+  if not embed or debug then
     folderAbs = makeAbsolute(folder)
     filename = createUniqueName(source, renderOptions)
     fileAbs = path.join{folderAbs, filename..'.'..ext}
@@ -848,8 +874,8 @@ local function latexToImage(source, renderOptions)
 
       	writeToFile(source, 'source.tex')
 
-        -- keep_sources is for debugging, do it before LaTeX runs
-        if keep_sources then
+        -- debug: copy before, LaTeX may crash
+        if debug then
           writeToFile(source, texfileAbs)
         end
 
@@ -959,7 +985,7 @@ local function toImage(elem, renderOptions)
   end
  
   return img
-  
+
 end
 
 -- ## Functions to traverse the document tree
@@ -997,7 +1023,11 @@ local function scanContainer(elem, renderOptions)
     --- build recursive scanner from updated options
     local scan = function (elem) return scanContainer(elem, opts) end
     --- build imagifier from updated options
-    local imagify = function(el) return toImage(el, opts) end
+    local imagify = function(el) 
+      if latexType(el) then 
+        return toImage(el, opts)
+      end
+    end
     --- apply recursion first, then imagifier
     return elem:walk({
       Div = scan,
