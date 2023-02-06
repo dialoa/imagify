@@ -951,13 +951,15 @@ local function toImage(elem, renderOptions)
   -- prepare Image element
   if result then 
     img = createImageElemFrom(code, result, renderOptions, elemType)
+    if elemType == 'RawBlock' then
+      img = pandoc.Para(img)
+    end
   else
     img = elem
   end
  
-  return elemType == 'RawBlock' and pandoc.Para(img)
-    or img
-
+  return img
+  
 end
 
 -- ## Functions to traverse the document tree
@@ -987,23 +989,23 @@ local function scanContainer(elem, renderOptions)
   local class = imagifyClass(elem)
 
   if class then
-    -- create new rendering options by applying the class options
-    local opts = mergeMapInto(filterOptions.optionsForClass[class], 
-                    renderOptions)
+   -- create new rendering options by applying the class options
+   local opts = mergeMapInto(filterOptions.optionsForClass[class], 
+   renderOptions)
     -- apply any locally specified rendering options
     opts = mergeMapInto(getRenderOptions(elem.attributes), opts) 
-    --- recursive scanner with updated options
+    --- build recursive scanner from updated options
     local scan = function (elem) return scanContainer(elem, opts) end
-    --- imagifier with updated options
+    --- build imagifier from updated options
     local imagify = function(el) return toImage(el, opts) end
     --- apply recursion first, then imagifier
     return elem:walk({
       Div = scan,
       Span = scan,
     }):walk({
-        Math = imagify,
-        RawInline = imagify,
-        RawBlock = imagify,  
+      Math = imagify,
+      RawInline = imagify,
+      RawBlock = imagify,  
     })
 
   else
