@@ -25,3 +25,28 @@ conversion to SVG, the required `dvisvgm` option is set too:
 \end{tikzpicture}.
 
 ::::
+
+::: {.imagify .fitch}
+
+A fitch-style proof using a local package:
+
+```{=latex}
+
+\begin{nd}
+  \hypo[~] {1} {A \lor B}
+  \open
+  \hypo[~] {2} {A}
+  \have[~] {3} {C} 
+  \close
+  \open
+  \hypo[~] {4} {B}
+  \have[~] {5} {D}
+  \close
+  \have[~] {6} {C \lor D}
+\end{nd}
+
+```
+
+:::
+
+

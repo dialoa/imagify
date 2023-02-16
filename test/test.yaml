@@ -1,17 +1,10 @@
-input-files: ["test/input.md"]
+# Test defaults
+
+input-files:
+- ${.}/input.md
 standalone: true
 filters:
   - {type: lua, path: imagify.lua}
-metadata:
-  imagify:
-    scope: all
-    embed: false
-    lazy: true
-    output-folder: test/_imagify_files
-    pdf-engine: latex
-    keep-sources: false
-    zoom: 1.5
-    classes: 
-      pre-render:
-          zoom: 4 # will show if it's not overriden
-          block-style: "border: 1px solid red;"
+# Metadata must be provided in a separate file to be parsed
+# as Markdown <https://pandoc.org/MANUAL.html#reader-options-1>
+metadata-file: ${.}/test_meta.yaml

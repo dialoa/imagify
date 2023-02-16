@@ -24,6 +24,11 @@ PANDOC_VERSION:must_be_at_least(
   'The Imagify filter requires Pandoc version >= 2.19'
 )
 
+-- # Modules
+
+require 'common'
+require 'file'
+
 -- # Global variables
 
 local stringify = pandoc.utils.stringify
@@ -93,68 +98,6 @@ local Templates = {
   default = {},
 }
 
--- # Helper functions
-
--- ## Debugging
-
----message: send message to std_error
----comment
----@param type 'INFO'|'WARNING'|'ERROR'
----@param text string error message
-local function message (type, text)
-    local level = {INFO = 0, WARNING = 1, ERROR = 2}
-    if level[type] == nil then type = 'ERROR' end
-    if level[PANDOC_STATE.verbosity] <= level[type] then
-        io.stderr:write('[' .. type .. '] Imagify: ' 
-            .. text .. '\n')
-    end
-end
-
--- ## common Lua
-
----tfind: finds a value in an array
----comment
----@param tbl table
----@return result number|false 
-local function tfind(tbl, needle)
-  local i = 0
-  for _,v in ipairs(tbl) do
-    i = i + 1
-    if v == needle then
-      return i
-    end
-  end
-  return false
-end 
-
----concatStrings: concatenate a list of strings into one.
----@param list string<> list of strings
----@param separator string separator (optional)
-local function concatStrings(list, separator)
-  separator = separator and separator or ''
-  local result = ''
-  for _,str in ipairs(list) do
-    result = result..separator..str
-  end
-  return result
-end
-
----mergeMapInto: returns a new map resulting from merging a new one
--- into an old one. 
----@param new table|nil map with overriding values
----@param old table|nil map with original values
----@return table result new map with merged values
-local function mergeMapInto(new,old)
-  local result = {} -- we need to clone
-  if type(old) == 'table' then 
-    for k,v in pairs(old) do result[k] = v end
-  end
-  if type(new) == 'table' then
-    for k,v in pairs(new) do result[k] = v end
-  end
-  return result
-end
-
 -- ## Pandoc AST functions
 
 --outputIsLaTeX: checks whether the target output is in LaTeX
@@ -217,103 +160,6 @@ local function extractLaTeX(obj)
 
 end
 
--- ## File functions
-
----fileExists: checks whether a file exists
-local function fileExists(filepath)
-  local f = io.open(filepath, 'r')
-  if f ~= nil then
-    io.close(f)
-    return true
-  else 
-    return false
-  end
-end
-
----makeAbsolute: make filepath absolute
----@param filepath string file path
----@param root string|nil if relative, use this as root (default working dir) 
-local function makeAbsolute(filepath, root)
-  root = root or system.get_working_directory()
-  return path.is_absolute(filepath) and filepath
-    or path.join{ root, filepath}
-end
-
----folderExists: checks whether a folder exists
-local function folderExists(folderpath)
-
-  -- the empty path always exists
-  if folderpath == '' then return true end
-
-  -- normalize folderpath
-  folderpath = folderpath:gsub('[/\\]$','')..path.separator
-  local ok, err, code = os.rename(folderpath, folderpath)
-  -- err = 13 permission denied
-  return ok or err == 13 or false
-end
-
----ensureFolderExists: create a folder if needed
-local function ensureFolderExists(folderpath)
-  local ok, err, code = true, nil, nil
-
-  -- the empty path always exists
-  if folderpath == '' then return true, nil, nil end
-
-  -- normalize folderpath
-  folderpath = folderpath:gsub('[/\\]$','')
-
-  if not folderExists(folderpath) then
-    ok, err, code = os.execute('mkdir '..folderpath)
-  end
-
-  return ok, err, code
-end
-
----writeToFile: write string to file.
----@param contents string file contents
----@param filepath string file path
----@return nil | string status error message
-local function writeToFile(contents, filepath)
-  local f = io.open(filepath, 'w')
-	if f then 
-	  f:write(contents)
-	  f:close()
-  else
-    return 'File not found'
-  end
-end
-
----readFile: read file as string.
----@param filepath string file path
----@return string contents or empty string if failure
-local function readFile(filepath)
-	local contents
-	local f = io.open(filepath, 'r')
-	if f then 
-		contents = f:read('a')
-		f:close()
-	end
-	return contents or ''
-end
-
--- stripExtension: strip filepath of the filename's extension
----@param filepath string file path
----@param extensions string[] list of extensions, e.g. {'tex', 'latex'}
----  if not provided, any alphanumeric extension is stripped
----@return string filepath revised filepath
-function stripExtension(filepath, extensions)
-  local name, ext = path.split_extension(filepath)
-  ext = ext:match('^%.(.*)')
-
-  if extensions then
-    extensions = pandoc.List(extensions)
-    return extensions:find(ext) and name
-      or filepath
-  else
-    return name
-  end
-end
-
 -- ## Smart imagifying functions
 
 ---usesTikZ: tell whether a source contains a TikZ picture
@@ -336,7 +182,8 @@ end
 ---@param source string filepath of the source file
 ---@param options table options
 --    format = output format, 'dvi' or 'pdf',
---    pdf_engine = pdf engine, 'latex', 'pdflatex', 'xelatex', 'xetex', '' etc. 
+--    pdf_engine = pdf engine, 'latex', 'pdflatex', 'xelatex', 'xetex', '' etc.
+--    texinputs = value for export TEXINPUTS 
 ---@return string|nil filepath path to the output file if successful
 local function runLaTeX(source, options)
 	options = options or {}
@@ -345,6 +192,7 @@ local function runLaTeX(source, options)
   local outfile = stripExtension(source, {'tex','latex'})
   local ext = pdf_engine == 'xelatex' and format == 'dvi' and '.xdv'
                 or '.'..format
+  local texinputs = options.texinputs or nil
   -- additional options must come *after* -<engine> and *before* <source>
   local cmd = pandoc.List:new({
     'latexmk -'..pdf_engine, 
@@ -363,17 +211,14 @@ local function runLaTeX(source, options)
     cmd:insert(2, '--output-format='..format)
   end
 
-  -- run in protected mode unless we're debugging
-  cmd = concatStrings(cmd, ' ')
-  run = function() 
-    os.execute(cmd)
+  -- export TEXINPUTS
+  if texinputs then
+    cmd:insert(1, 'export TEXINPUTS='..texinputs..';')
   end
 
-  if debug then 
-    run()
-  else
-    success = pcall(run())
-  end
+  -- run in protected mode
+  cmd = concatStrings(cmd, ' ')
+  success = pcall(os.execute, cmd)
 
   if success then
 
@@ -827,6 +672,9 @@ local function latexToImage(source, renderOptions)
   local folder = filterOptions.output_folder or ''
   local jobFolder = makeAbsolute(PANDOC_STATE.output_file 
     and path.directory(PANDOC_STATE.output_file) or '')
+  local texinputs = renderOptions.texinputs
+    or jobFolder..'//:' 
+  -- to be created
   local folderAbs, file, fileAbs, texfileAbs = '', '', '', ''
   local fileRelativeToJob = ''
   local symLinks = {}
@@ -888,6 +736,7 @@ local function latexToImage(source, renderOptions)
 				result = runLaTeX('source.tex', {
 					format = latex_out_format,
 					pdf_engine = pdf_engine,
+          texinputs = texinputs
 				})
 
         -- further conversions of dvi/pdf?
@@ -1015,12 +864,12 @@ local function scanContainer(elem, renderOptions)
   local class = imagifyClass(elem)
 
   if class then
-   -- create new rendering options by applying the class options
-   local opts = mergeMapInto(filterOptions.optionsForClass[class], 
-   renderOptions)
+    -- create new rendering options by applying the class options
+    local opts = mergeMapInto(filterOptions.optionsForClass[class], 
+      renderOptions)
     -- apply any locally specified rendering options
-    opts = mergeMapInto(getRenderOptions(elem.attributes), opts) 
-    --- build recursive scanner from updated options
+    opts = mergeMapInto(getRenderOptions(elem.attributes), opts)
+    -- build recursive scanner from updated options
     local scan = function (elem) return scanContainer(elem, opts) end
     --- build imagifier from updated options
     local imagify = function(el) 
