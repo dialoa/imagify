@@ -29,11 +29,10 @@ jobs:
         pandoc:
           - edge
           - latest
-            # This should be the oldest version that's supported
-            # - 2.19.2
+          - 2.19.0
 
     container:
-      image: pandoc/core:${{ matrix.pandoc }}
+      image: pandoc/latex:${{ matrix.pandoc }}
 
     steps:
       - name: Checkout
