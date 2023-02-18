@@ -636,7 +636,7 @@ local function getRenderOptions(opts)
   end
 
   -- Special cases
-  -- `embed` not possible with `extract-media` is set
+  -- `embed` not possible with `extract-media` on
   if result.embed and filterOptions.no_html_embed then
     result.embed = nil
   end
@@ -671,6 +671,7 @@ local function readImagifyClasses(opts)
 end
 
 ---init: read metadata options.
+-- classes in `imagify-classes:` override those in `imagify: classes:`
 -- Special cases:
 --    filterOptions.no_html_embed: Pandoc can't handle URL-embedded images when extract-media is on
 ---@param meta pandoc.Meta doc's metadata
@@ -681,6 +682,10 @@ local function init(meta)
       or {scope = stringify(meta.imagify)}
     ) 
     or {}
+  local userClasses = meta['imagify-classes'] 
+    and pandoctype(meta['imagify-classes'] ) == 'table' 
+    and meta['imagify-classes']
+    or nil
   local rootKeysUsed = {
     'header-includes',
     'mathspec',
@@ -722,6 +727,10 @@ local function init(meta)
 
   if userOptions.classes then
     filterOptions.classes = readImagifyClasses(userOptions.classes)
+  end
+
+  if userClasses then 
+    filterOptions.classes = readImagifyClasses(userClasses)
   end
 
 end
