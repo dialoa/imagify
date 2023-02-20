@@ -52,7 +52,7 @@ local filterOptions = {
   lazy = true,
   no_html_embed = false,
   libgs_path = nil,
-  output_folder = '',
+  output_folder = '_imagify',
   output_folder_exists = false,
   optionsForClass = {},
   extensionForOutput = {
@@ -325,9 +325,9 @@ end
 ---@param opts table options map from meta.imagify
 ---@return table result map of options
 local function getFilterOptions(opts)
-  local result = {}
   local stringKeys = {'scope', 'libgs-path', 'output-folder'}
   local boolKeys = {'lazy'}
+  local result = {}
 
   for _,key in ipairs(boolKeys) do
     if opts[key] ~= nil and pandoctype(opts[key]) == 'boolean' then
@@ -345,9 +345,10 @@ local function getFilterOptions(opts)
     or opts.scope == 'none' and 'none'
   ) or nil
 
-  result.libgs_path = opts['libgs-path'] and opts['libgs-path']
+  result.libgs_path = opts['libgs-path'] and opts['libgs-path'] or nil
 
-  result.output_folder = opts['output-folder'] and opts['output-folder']
+  result.output_folder = opts['output-folder'] 
+    and opts['output-folder'] or nil
 
   return result
 
@@ -398,10 +399,19 @@ local function getRenderOptions(opts)
   }
 
   -- boolean values
+  -- @TODO these may be passed as strings in Div attributes
   -- convert "xx-yy" to "xx_yy" keys
   for _,key in ipairs(renderBooleanlKeys) do
-    if opts[key] ~= nil and pandoctype(opts[key]) == 'boolean' then
-      result[key:gsub('-','_')] = opts[key]
+    if opts[key] ~= nil then
+      if pandoctype(opts[key]) == 'boolean' then
+        result[key:gsub('-','_')] = opts[key]
+      elseif pandoctype(opts[key]) == 'string' then 
+        if opts[key] == 'false' or opts[key] == 'no' then
+          result[key:gsub('-','_')] = false
+        else
+          result[key:gsub('-','_')] = true
+        end
+      end
     end
   end
   

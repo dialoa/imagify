@@ -1,4 +1,4 @@
-Imagify - Pandoc/Quarto filer convert LaTeX elements into images
+Imagify - Pandoc/Quarto filter to convert selected LaTeX into images
 ====================================================================
 
 [![GitHub build status][CI badge]][CI workflow]
@@ -9,57 +9,27 @@ images.
 [CI badge]: https://img.shields.io/github/actions/workflow/status/tarleb/lua-filter-template/ci.yaml?branch=main
 [CI workflow]: https://github.com/tarleb/lua-filter-template/actions/workflows/ci.yaml
 
-## Overview
+Overview
+--------------------------------------------------------------------
 
-* Flexible scope: imagify all, selected only, Tikz only, none.
-* Does not imagify when the target output is LaTeX/PDF, unless 
-  unless otherwise specified. 
-* In HTML, option to embed images within the output file.
-* Image rendering options (e.g. zoom); can be specified on a specific
-  element.
+Imagify turns selected (or all) LaTeX elements in a document into 
+images. Out of the box it tries to match the document's settings
+as closely as possible (fonts, LaTeX packages etc.), but its conversion
+options are fully customizable. 
 
-## Development notes
+In HTML output images can be embedded within the document itself.
 
-* Source: LaTeX, including TiKZ. 
-* Possible outputs: svg, pdf. Apparently docx handles pdf. Make room to allow for png, just in case.
-* Possible modes:
-  * Embedded (HTML and EPUB? output only). As inline SVG, or as "src="data:". I've opted for src="data:", percent-encoded. This allows me to output an IMG element in the AST, rather than raw HTML.
-  * File, mediabag
-  * File, filesystem
-* Output element: an Image element, in all cases.
-  * Display math handled by adding the style attribute.
-  * RawBlock handled by putting the image in a Para
-* Elements to handle
-  * All, selection
+Requirements: a LaTeX installation with the `latexmk` and `dvisvgm`
+tools. 
 
-Filter Options
-* If imagify is a string, assume it's mode.
-* mode: manual (default), all. Future: auto. 
-* classes: list of classes within which we imagify (applies to Div and Span). Or map class : options for the class
- libgs_path:
+Limitations:
 
-Rendering options
-* format: svg, png
-* output: embed, mediabag, file
-** mode: manual (def), all. Whether to handle all elements. Future: "auto", reads the LaTeX and tries to figure out whether LaTeX can handle all
-* preamble: LaTeX preamble. Append. Unless it's a map, with key mode: replace/append/prepend, value: content. 
-* dir: path to save
-* converter: dvisvgm, pdf2svg, magick, graphicsmagick, ... What to do if the convert clashes with the format style?
-* zoom
+* So far designed with HTML output in mind, LaTeX to SVG conversion.
+* In other output formats the images will be inserted / linked as PDFs,
+  and may display in wrong sizes or not at all. 
 
-Regional options: Div/Span attributes
-Local options: RawBlock/RawInline attributes
-
-## CONVERTER
-
-dvisvgm: doesn't support lualatex-generated dvi well ('WARNING: font file ... not found).
-
-
-Usage
+Installation
 ------------------------------------------------------------------
-
-The filter modifies the internal document representation; it can
-be used with many publishing systems that are based on pandoc.
 
 ### Plain pandoc
 
@@ -72,11 +42,10 @@ line option.
 
 Users of Quarto can install this filter as an extension with
 
-
-    quarto install extension tarleb/imagify
+    quarto install extension dialoa/imagify
 
 and use it by adding `imagify` to the `filters` entry
-in their YAML header.
+in their YAML header:
 
 ``` yaml
 ---
@@ -98,6 +67,109 @@ output:
     pandoc_args: ['--lua-filter=imagify.lua']
 ---
 ```
+
+Basic usage
+------------------------------------------------------------------
+
+In your markdown source, enclose a section of your document within
+a Div with class `imagify`:
+
+
+``` markdown
+::: imagify
+
+... (text and LaTeX) ...
+
+:::
+```
+
+In non-LaTeX output, any LaTeX math or raw LaTeX element will
+be converted into an image, placed within an `_imagify` folder in
+your current working directory.
+
+Images are generated using the LaTeX options specified
+in your document's metadata, if any. 
+(See the [Pandoc manual][PMan] for details.) 
+
+[PMan]: https://pandoc.org/MANUAL.html#variables-for-latex
+
+If a LaTeX element is or contains a TikZ picture, the TikZ
+package is loaded. If you need a specific library, place
+a `\usetikzlibrary` command at the beginning of your picture
+code.
+
+Options are specified via `imagify` and `imagify-classes` metadata
+variables. For instance, temporarily disable Imagify with:
+
+```
+imagify: none
+```
+
+Set Imagify to convert all LaTeX in a document, though this
+will be slow if it contains many formulas with:
+
+```
+imagify: all
+```
+
+Set the images to be embedded in HTML output with:
+
+``` yaml
+imagify:
+  embed: true
+```
+
+Change the images' zoom factor with:
+
+``` yaml
+imagify:
+  zoom: 1.6
+```
+
+The default is 1.5, which seems to work well with Pandoc's default 
+standalone HTML output.
+
+If image conversion fails, you can set the debug option 
+that will give you the `.tex` files that the filter
+produces and passes to LaTeX:
+
+``` yaml
+imagify:
+  debug: true
+```
+
+The `.tex` files are placed in the output folder 
+(by default `_imagify` in your working directory). 
+You can try to compile them yourself and see how to 
+change them. 
+
+Create custom imagifying classes with different
+options with the `imagify-class` variable:
+
+``` yaml
+imagify:
+  zoom: 1.6
+imagify-classes:
+  mybigimage: 
+    zoom: 2
+  mysmallimage:
+    zoom: 1
+```
+
+You can also specify rendering options on a Div itself:
+
+``` markdown
+
+::: {.imagify zoom='2' debug='true'}
+
+... (text with LaTeX element)
+
+:::
+
+Options reference
+------------------------------------------------------------------
+
+()
 
 License
 ------------------------------------------------------------------
