@@ -25,7 +25,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Setup Pages
-        uses: actions/configure-pages@v1
+        uses: actions/configure-pages@v3
       - name: Render Website
         run: |
           make -B website \
