@@ -14,7 +14,7 @@ end
 ---tfind: finds a value in an array
 ---comment
 ---@param tbl table
----@return result number|false 
+---@return number|false result
 function tfind(tbl, needle)
   local i = 0
   for _,v in ipairs(tbl) do
@@ -27,7 +27,7 @@ function tfind(tbl, needle)
 end 
 
 ---concatStrings: concatenate a list of strings into one.
----@param list string<> list of strings
+---@param list [ string ] list of strings
 ---@param separator string separator (optional)
 function concatStrings(list, separator)
   separator = separator and separator or ''

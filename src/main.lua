@@ -36,18 +36,45 @@ local pandoctype = pandoc.utils.type
 local system = pandoc.system
 local path = pandoc.path
 
----@class filterOptions filter's general setup.
----@field scope string 'manual', 'all', 'none', imagify all/no/selected elements.
----@field lazy boolean do not regenerate image files if they exist (default true)
----@field no_html_embed boolean prohibit embedding in HTML (e.g. if extract-media is set) 
----@field output_folder string directory for output
----@field output_folder_exists bool Internal variable to avoid repeated checks
----@field ligbs_path nil | string, path to Ghostscript library
----@field optionsForClass map of renderOptions for specific Span/Div classes 
---                            whose LaTeX elements are to be imagified.
----@field extensionForOutput map of image format (SVG or PDF) to use for some output formats.
+--- renderOptions type
+--- Contains the fields below plus a number of Pandoc metadata
+---keys like header-includes, fontenc, colorlinks etc. 
+---See getRenderOptions() for details.
+---@alias ro_force boolean imagify even when targeting LaTeX
+---@alias ro_embed boolean whether to embed (if possible) or output as file
+---@alias ro_debug boolean debug mode (keep .tex source, crash on fail)
+---@alias ro_template string identifier of a Pandoc template (default 'default')
+---@alias ro_pdf_engine 'latex'|'pdflatex'|'xelatex'|'lualatex' latex engine to be used
+---@alias ro_svg_converter 'dvisvgm' pdf/dvi to svg converter (default 'dvisvgm')
+---@alias ro_zoom string to apply when converting pdf/dvi to svg
+---@alias ro_vertical_align string vertical align value (HTML output)
+---@alias ro_block_style string style to apply to blockish elements (DisplayMath, RawBlock)
+---@alias renderOptsType {force: ro_force, embed: ro_embed, debug: ro_debug, template: ro_template, pdf_engine: ro_pdf_engine, svg_converter: ro_svg_converter, zoom: ro_zoom, vertical_align: ro_vertical_align, block_style: ro_block_style, }
+---@type renderOptsType
+local globalRenderOptions = {
+  force = false,
+  embed = true,
+  debug = false,
+  template = 'default',
+  pdf_engine = 'latex',
+  svg_converter = 'dvisvgm',
+  zoom = '1.5',
+  vertical_align = 'baseline',
+  block_style = 'display:block; margin: .5em auto;'
+}
+
+---@alias fo_scope 'manual'|'all'|'none', # imagify scope
+---@alias fo_lazy boolean, # do not regenerate existing image files
+---@alias fo_no_html_embed boolean, # prohibit html embedding
+---@alias fo_output_folder string, # path for outputs
+---@alias fo_output_folder_exists boolean, # Internal var to avoid repeat checks
+---@alias fo_libgs_path string|nil, # path to Ghostscript lib
+---@alias fo_optionsForClass { string: renderOptsType}, # renderOptions for imagify classes
+---@alias fo_extensionForOutput { default: string, string: string }, # map of image formats (svg|pdf) for some output formats 
+---@alias filterOptsType { scope : fo_scope, lazy: fo_lazy, no_html_embed : fo_no_html_embed, output_folder: fo_output_folder, output_folder_exists: fo_output_folder_exists, libgs_path: fo_libgs_path, optionsForClass: fo_optionsForClass, extensionForOutput: fo_extensionForOutput }
+---@type filterOptsType
 local filterOptions = {
-  scope = 'manual',
+  scope = 'manual', 
   lazy = true,
   no_html_embed = false,
   libgs_path = nil,
@@ -65,34 +92,11 @@ local filterOptions = {
   }
 }
 
----@class globalRenderOptions
----The following fields, plus a number of Pandoc metadata
----keys like header-includes, fontenc, colorlinks etc. 
----See getRenderOptions() for details.
----@field force bool imagify even when targeting LaTeX
----@field embed bool whether to embed (if possible) or output as file
----@field debug bool debug mode (keep .tex source, crash on fail)
----@field template string identifier of a Pandoc template (default 'default')
----@field pdf_engine string latex command to be used
----@field svg_converter string pdf/dvi to svg converter (default 'dvisvgm')
----@field zoom string to apply when converting pdf/dvi to svg
----@field vertical_align string vertical align value (HTML output)
----@field block_style string style to apply to blockish elements (DisplayMath, RawBlock)
-local globalRenderOptions = {
-  force = false,
-  embed = true,
-  debug = false,
-  template = 'default',
-  pdf_engine = 'latex',
-  svg_converter = 'dvisvgm',
-  zoom = '1.5',
-  vertical_align = 'baseline',
-  block_style = 'display:block; margin: .5em auto;'
-}
-
----@class Templates
----Templates.id = { source = string, compiled = Template}
----default key reserved for Pandoc's default template
+---@alias tplId string template identifier, 'default' reserved for Pandoc's default template
+---@alias to_source string template source code
+---@alias to_template pandoc.Template compiled template
+---@alias templateOptsType { default: table, string: { source: to_source, compiled: to_template}}
+---@type templateOptsType
 local Templates = {
   default = {},
 }
@@ -100,7 +104,7 @@ local Templates = {
 -- ## Pandoc AST functions
 
 --outputIsLaTeX: checks whether the target output is in LaTeX
----@return bool
+---@return boolean
 local function outputIsLaTeX()
   return FORMAT:match('latex') or FORMAT:match('beamer') or false
 end
@@ -115,7 +119,7 @@ local function ensureList(obj)
 end
 
 --- latexType: identify the Pandoc type of a LaTeX element.
----@param elem pandoc.Math|pandoc.RawBlock|pandoc.Rawinline element
+---@param elem pandoc.Math|pandoc.RawBlock|pandoc.RawInline element
 ---@return string|nil 'InlineMath', 'DisplayMath', 'Rawblock', 'RawInline'
 -- or nil if the element isn't a LaTeX-containing element.
 local function latexType(elem)
@@ -163,7 +167,7 @@ end
 
 ---usesTikZ: tell whether a source contains a TikZ picture
 ---@param source string LaTeX source
----@return bool result
+---@return boolean result
 local function usesTikZ(source)
   return source:match('\\begin{tikzpicture}') and true or false
 end
@@ -550,7 +554,7 @@ end
 
 ---getTemplate: get a compiled template
 ---@param id string template identifier (key of Templates)
----@return tpl Template|nil result
+---@return pandoc.Template|nil tpl result
 local function getTemplate(id)
   if not Templates[id] then
     return nil
@@ -823,7 +827,7 @@ end
 
 ---imagifyClass: find an element's imagify class, if any.
 ---If both `imagify` and a custom class is present, return the latter.
----@param elem Pandoc.Div|pandoc.Span
+---@param elem pandoc.Div|pandoc.Span
 ---@return string 
 local function imagifyClass(elem)
   -- priority to custom classes other than 'imagify'
@@ -839,7 +843,7 @@ local function imagifyClass(elem)
 end
 
 ---scanContainer: read imagify options of a Span/Div, imagify if needed.
----@param elem Pandoc.Div|pandoc.Span
+---@param elem pandoc.Div|pandoc.Span
 ---@param renderOptions table render options handed down from higher-level elems
 ---@return pandoc.Span|pandoc.Div|nil span modified element or nil if no change
 local function scanContainer(elem, renderOptions)
@@ -886,8 +890,7 @@ end
 -- Handles filterOptions `scope` and `force`
 local function main(doc)
   local scope = filterOptions.scope
-  local force = filterOptions.force
-  local div = nil
+  local force = globalRenderOptions.force
 
   if scope == 'none' or (outputIsLaTeX() and not force) then
       return nil
