@@ -29,7 +29,7 @@ jobs:
         pandoc:
           - edge
           - latest
-          - 2.19.0
+          - 2.19.2
 
     container:
       image: pandoc/latex:${{ matrix.pandoc }}
@@ -42,4 +42,4 @@ jobs:
         run: apk add make
 
       - name: Test
-        run: make test
+        run: make test SOURCE_DIR=""

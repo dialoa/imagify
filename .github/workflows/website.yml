@@ -31,7 +31,7 @@ jobs:
           make -B website \
             SOURCE_DIR="" \
             PANDOC="docker run --rm --volume $(pwd):/data \
-              --user $(id -u):$(id -g) pandoc/core:latest"
+              --user $(id -u):$(id -g) pandoc/latex:latest"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
