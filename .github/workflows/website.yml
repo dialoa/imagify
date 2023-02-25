@@ -29,6 +29,7 @@ jobs:
       - name: Render Website
         run: |
           make -B website \
+            SOURCE_DIR="" \
             PANDOC="docker run --rm --volume $(pwd):/data \
               --user $(id -u):$(id -g) pandoc/core:latest"
       - name: Upload artifact

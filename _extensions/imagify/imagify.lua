@@ -232,7 +232,6 @@ local stringify = pandoc.utils.stringify
 local pandoctype = pandoc.utils.type
 local system = pandoc.system
 local path = pandoc.path
-local mediabag = pandoc.mediabag
 
 ---@class filterOptions filter's general setup.
 ---@field scope string 'manual', 'all', 'none', imagify all/no/selected elements.
@@ -272,7 +271,7 @@ local filterOptions = {
 ---@field debug bool debug mode (keep .tex source, crash on fail)
 ---@field template string identifier of a Pandoc template (default 'default')
 ---@field pdf_engine string latex command to be used
----@field converter string pdf/dvi to svg converter (default 'dvisvgm')
+---@field svg_converter string pdf/dvi to svg converter (default 'dvisvgm')
 ---@field zoom string to apply when converting pdf/dvi to svg
 ---@field vertical_align string vertical align value (HTML output)
 ---@field block_style string style to apply to blockish elements (DisplayMath, RawBlock)
@@ -282,7 +281,7 @@ local globalRenderOptions = {
   debug = false,
   template = 'default',
   pdf_engine = 'latex',
-  converter = 'dvisvgm',
+  svg_converter = 'dvisvgm',
   zoom = '1.5',
   vertical_align = 'baseline',
   block_style = 'display:block; margin: .5em auto;'
@@ -563,14 +562,13 @@ local function getRenderOptions(opts)
   }
   local renderStringKeys = {
     'pdf-engine',
-    'converter',
+    'svg-converter',
     'zoom', 
     'vertical-align',
     'block-style',
   }
   local renderListKeys = {
     'classoption',
-    'link',
   }
   -- Pandoc metadata variables used by the LaTeX template
   local renderMetaKeys = {
@@ -592,7 +590,7 @@ local function getRenderOptions(opts)
   }
   checks = {
     pdf_engine = {'latex', 'pdflatex', 'xelatex', 'lualatex'},
-    converter = {'dvisvgm'},
+    svg_converter = {'dvisvgm'},
   }
 
   -- boolean values
@@ -756,8 +754,7 @@ local function getTemplate(id)
   end
 
   -- ensure there's a non-empty source, otherwise return nil
-
-  -- special case: default template, get source from Pandoc
+  -- special case: default template, fill in source from Pandoc
   if id == 'default' and not Templates[id].source then
     Templates[id].source = pandoc.template.default('latex')
   end
@@ -788,7 +785,7 @@ local function buildTeXDoc(text, renderOptions, elemType)
   text = text or ''
   renderOptions = renderOptions or {}
   local template = renderOptions.template or 'default'
-  local converter = renderOptions.converter or 'dvisvgm'
+  local svg_converter = renderOptions.svg_converter or 'dvisvgm'
   local doc = nil
   
   -- wrap DisplayMath and InlineMath in math mode
@@ -814,7 +811,7 @@ local function buildTeXDoc(text, renderOptions, elemType)
   -- Standalone class `dvisvgm` option: make output file
   -- dvisvgm-friendly (esp TikZ images).
   -- Not compatible with pdflatex
-  if endFormat == 'svg' and converter == 'dvisvgm' then
+  if endFormat == 'svg' and svg_converter == 'dvisvgm' then
     classopt:insert(pandoc.Str('dvisvgm'))
   end
   
@@ -847,27 +844,6 @@ local function createUniqueName(source, renderOptions)
     '|Zoom:'..renderOptions.zoom)
 end
 
----findTarget: find linked file and return the source
--- and target for a `ln` command.
----@param link string 
----@return src string src of ln (must be a filename, no subdir)
----@return tar string target of ln (absolute path)
-local function findTarget(link)
-  link = stringify(link)
-  local searchPath = pandoc.List:new{ '' }
-  local src, tar = nil, nil
-
-  for _, p in ipairs(searchPath) do
-    if fileExists(path.join{ p, link }) then
-      src = path.filename(link)
-      tar = makeAbsolute(path.join{ p, path.directory(link)})
-      break
-    end
-  end
-
-  return src, tar
-end
-
 ---latexToImage: convert LaTeX to image.
 --  The image can be exported as SVG string or as a SVG or PDF file.
 ---@param source string LaTeX source document
@@ -883,7 +859,6 @@ local function latexToImage(source, renderOptions)
     or false
   local pdf_engine = renderOptions.pdf_engine or 'latex'
   local latex_out_format = ext == 'svg' and 'dvi' or 'pdf'
-  local linkedFiles = renderOptions.link or {}
   local debug = renderOptions.debug or false
   local folder = filterOptions.output_folder or ''
   local jobFolder = makeAbsolute(PANDOC_STATE.output_file 
@@ -895,18 +870,6 @@ local function latexToImage(source, renderOptions)
   local fileRelativeToJob = ''
   local symLinks = {}
   local result = ''
-
-  -- Find any files to symlink and populate symLinks
-  -- Look for them in working dir and sources dir 
-  for _,link in ipairs(linkedFiles) do
-    local src, tar = findTarget(link)
-    if target then
-      symLinks[src] = tar
-    else
-      message('WARNING', 'Could not find linked resource '..stringify(link)
-        ..'. Imagifying might break down.')
-    end
-  end
 
   -- if we output files prepare folder and file names
   -- we need absolute paths to move things out of the temp dir

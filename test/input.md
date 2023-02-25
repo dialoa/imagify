@@ -8,7 +8,7 @@ Imagify the following span: [the formula $E = mc^2$]{.imagify}.
 
 Imagify a display formula: $$P = \frac{T}{V}$$
 
-::: {.pre-render zoom='1'}
+::: {.highlightme zoom='1'}
 
 Imagify the following too, with a class-selected block style (red border,
 inline) and a locally specified zoom of 1. $$P = \frac{T}{V}$$
