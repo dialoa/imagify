@@ -131,38 +131,6 @@ local function latexType(elem)
   or nil
 end
 
----extractLaTeX: extract LaTeX from (List of) Blocks or Inlines
----@param obj pandoc.List | pandoc.Blocks | pandoc.Inlines 
----@return string 
-local function extractLaTeX(obj)
-  local obj_type = pandoc.utils.type(obj)
-  local result = ''
-  print(obj_type)
-
-  extractor = function(el) 
-    if el.format == 'tex' or el.format == 'latex' then
-      result = result .. el.text .. '\n'
-    end
-  end
-  filter = {
-    RawBlock = extractor,
-    RawInline = extractor,
-  }
-
-  if obj_type == 'List' then
-    for _,elem in ipairs(obj) do
-      result = result .. extractLaTeX(elem)
-    end
-  elseif obj_type == 'Blocks' then
-    pandoc.Div(obj):walk(filter)
-  elseif obj_type == 'Inlines' then
-    pandoc.Div(obj):walk(filter)
-  end
-
-  return result
-
-end
-
 -- ## Smart imagifying functions
 
 ---usesTikZ: tell whether a source contains a TikZ picture
@@ -185,9 +153,9 @@ end
 ---@param source string filepath of the source file
 ---@param options table options
 --    format = output format, 'dvi' or 'pdf',
---    pdf_engine = pdf engine, 'latex', 'pdflatex', 'xelatex', 'xetex', '' etc.
+--    pdf_engine = pdf engine, 'latex', 'xelatex', 'xetex', '' etc.
 --    texinputs = value for export TEXINPUTS 
----@return string|nil filepath path to the output file if successful
+---@return boolean success, string result result is filepath or LaTeX log if failed
 local function runLaTeX(source, options)
 	options = options or {}
   local format = options.format or 'pdf'
@@ -196,57 +164,68 @@ local function runLaTeX(source, options)
   local ext = pdf_engine == 'xelatex' and format == 'dvi' and '.xdv'
                 or '.'..format
   local texinputs = options.texinputs or nil
-  -- additional options must come *after* -<engine> and *before* <source>
-  local cmd = pandoc.List:new({
-    'latexmk -'..pdf_engine, 
-    '--interaction=nonstopmode',
-    source})
-  local success = true
+  -- Latexmk: extra options come *after* -<engine> and *before* <source>
+  local latex_args = pandoc.List:new{ '--interaction=nonstopmode' }
+  local latexmk_args = pandoc.List:new{ '-'..pdf_engine }
+  -- Export the TEXINPUTS variable
+  local env = texinputs and 'export TEXINPUTS='..texinputs..'; '
+    or ''
+  -- latex command run, for debug purposes
+  local cmd
   
+  -- @TODO implement verbosity in latex
   -- latexmk silent mode
   if PANDOC_STATE.verbosity == 'ERROR' then
-    cmd:insert(2, '-silent')
+    latexmk_args:insert('-silent')
   end
 
   -- xelatex doesn't accept `output-format`,
   -- generates both .pdf and .xdv
   if pdf_engine ~= 'xelatex' then
-    cmd:insert(2, '--output-format='..format)
+    latex_args:insert('--output-format='..format)
   end
 
-  -- export TEXINPUTS
-  if texinputs then
-    cmd:insert(1, 'export TEXINPUTS='..texinputs..';')
-  end
 
-  -- run in protected mode
-  cmd = concatStrings(cmd, ' ')
-  success = pcall(os.execute, cmd)
+  -- try Latexmk first, latex engine second
+  -- two runs of latex engine
+  cmd = env..'latexmk '..concatStrings(latexmk_args..latex_args, ' ')
+    ..' '..source
+  local success, err, code = os.execute(cmd)
+
+  if not success and code == 127 then
+    cmd = pdf_engine..' '
+    ..concatStrings(latex_args, ' ')
+    ..' '..source..' 2>&1 > /dev/null '..'; '
+    success = os.execute(env..cmd..cmd)
+  end
 
   if success then
 
-    return outfile..ext
+    return true, outfile..ext
 
   else
-    message('ERROR', 'LaTeX generation failed.')
-    local log = readFile(outfile..'.log')
+
+    local result = 'LaTeX compilation failed.\n'
+      ..'Command used: '..cmd..'\n'
+    log = readFile(outfile..'.log')
     if log then 
-      print('LaTeX log:')
-      print(log)
+      result = result..'LaTeX log:\n'..log
     end
+    return false, result
 
   end
 
 end
 
---- toSVG: convert latex output to SVG.
--- @param source string source filepath
--- @param options table of options:
---    output = string output filepath (directory must exist),
---    zoom = string zoom factor, e.g. 1.5
--- @return string output filepath
--- @note Ghostcript library required to convert PDF files.
+---toSVG: convert latex output to SVG.
+---Ghostcript library required to convert PDF files.
 --        See divsvgm manual for more details.
+-- Options:
+--    *output*: string output filepath (directory must exist),
+--    *zoom*: string zoom factor, e.g. 1.5.
+---@param source string filepath of dvi, xdv or svg file
+---@param options { output : string, zoom: string} options
+---@return success boolean, result string filepath
 local function toSVG(source, options)
   if source == nil then return nil end
 	local options = options or {}
@@ -279,9 +258,19 @@ local function toSVG(source, options)
 
 	cmd_opts:insert('--output='..outfile)
 
-	pandoc.pipe('dvisvgm', cmd_opts, '')
+  success = os.execute('dvisvgm'
+    ..' '..concatStrings(cmd_opts, ' ')
+  )
 
-	return outfile
+  if success then
+
+    return success, outfile
+
+  else
+
+    return success, 'DVI/PDF to SVG conversion failed\n'
+
+  end
 
 end
 
@@ -396,7 +385,7 @@ local function getRenderOptions(opts)
     'urlstyle',
   }
   checks = {
-    pdf_engine = {'latex', 'pdflatex', 'xelatex', 'lualatex'},
+    pdf_engine = {'latex', 'xelatex', 'lualatex'},
     svg_converter = {'dvisvgm'},
   }
 
@@ -655,7 +644,7 @@ end
 --  The image can be exported as SVG string or as a SVG or PDF file.
 ---@param source string LaTeX source document
 ---@param renderOptions table rendering options
----@return string result file contents or filepath or ''.
+---@return success boolean, string result result is file contents or filepath or error message.
 local function latexToImage(source, renderOptions)
   local renderOptions = renderOptions or {}
   local ext = filterOptions.extensionForOutput[FORMAT]
@@ -675,8 +664,7 @@ local function latexToImage(source, renderOptions)
   -- to be created
   local folderAbs, file, fileAbs, texfileAbs = '', '', '', ''
   local fileRelativeToJob = ''
-  local symLinks = {}
-  local result = ''
+  local success, result
 
   -- if we output files prepare folder and file names
   -- we need absolute paths to move things out of the temp dir
@@ -713,13 +701,8 @@ local function latexToImage(source, renderOptions)
           writeToFile(source, texfileAbs)
         end
 
-        -- create symlinks
-        for src, tar in pairs(symLinks) do
-          os.execute('ln -s '..src..' '..tar)
-        end
-
         -- result = 'source.dvi'|'source.xdv'|'source.pdf'|nil
-				result = runLaTeX('source.tex', {
+				success, result = runLaTeX('source.tex', {
 					format = latex_out_format,
 					pdf_engine = pdf_engine,
           texinputs = texinputs
@@ -727,10 +710,9 @@ local function latexToImage(source, renderOptions)
 
         -- further conversions of dvi/pdf?
 
-        if ext == 'svg' then
+        if success and ext == 'svg' then
 
-          -- result = 'source.svg'
-					result = toSVG(result, {
+					success, result = toSVG(result, {
             zoom = renderOptions.zoom,
           })
 
@@ -738,9 +720,9 @@ local function latexToImage(source, renderOptions)
 
         -- embed or save
 
-        if result then
+        if success then
 
-          if embed then
+          if embed and ext == 'svg' then
 
             -- read svg contents and cleanup
             result = "<?xml version='1.0' encoding='UTF-8'?>\n"
@@ -755,13 +737,13 @@ local function latexToImage(source, renderOptions)
             result = fileRelativeToJob
 
           end
-
+          
         end
 
     end)
   end)
 
-  return result
+  return success, result
 
 end
 
@@ -795,28 +777,32 @@ end
 ---Return the original element if conversion failed.
 ---@param elem pandoc.Math|pandoc.RawInline|pandoc.RawBlock
 ---@param renderOptions table rendering options
----@return pandoc.Image|pandoc.Math|pandoc.RawInline|pandoc.RawBlock elem
+---@return pandoc.Image|pandoc.Inlines elem
 local function toImage(elem, renderOptions)
   local elemType = latexType(elem)
   local code = elem.text or ''
   local doc = ''
-  local result = ''
-  local img = nil
+  local success, result, img
 
   -- prepare LaTeX source document
   doc = buildTeXDoc(code, renderOptions, elemType)
 
   -- convert to file or string
-  result = latexToImage(doc, renderOptions)
+  success, result = latexToImage(doc, renderOptions)
 
   -- prepare Image element
-  if result then 
+  if success then 
     img = createImageElemFrom(code, result, renderOptions, elemType)
     if elemType == 'RawBlock' then
       img = pandoc.Para(img)
     end
   else
-    img = elem
+    message('ERROR', result)
+    img = pandoc.List:new {
+      pandoc.Emph{ pandoc.Str('<LaTeX content not imagified>') },
+      pandoc.Space(), pandoc.Str(code), pandoc.Space(),
+      pandoc.Emph{ pandoc.Str('<end of LaTeX content>') },
+    }
   end
  
   return img
@@ -896,6 +882,7 @@ local function main(doc)
       return nil
   end
 
+  -- whole doc wrapped in a Div to use the recursive scanner
   local div = pandoc.Div(doc.blocks)
 
   -- if scope == 'all' we tag the whole doc as `imagify`

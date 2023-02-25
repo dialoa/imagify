@@ -299,7 +299,7 @@ as attributes of an imagify class Div elements.
 : imagify even when the output is LaTeX/PDF. Default: false.
 
 `pdf-engine`
-: string, one of `latex`, `pdflatex`, `xelatex`, `lualatex`.
+: string, one of `latex`, `xelatex`, `lualatex`.
   Which engine to use when converting LaTeX to `dvi` or `pdf`.
   Defaults to `latex`.
 

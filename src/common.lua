@@ -27,8 +27,9 @@ function tfind(tbl, needle)
 end 
 
 ---concatStrings: concatenate a list of strings into one.
----@param list [ string ] list of strings
+---@param list string[]  list of strings
 ---@param separator string separator (optional)
+---@return string result
 function concatStrings(list, separator)
   separator = separator and separator or ''
   local result = ''

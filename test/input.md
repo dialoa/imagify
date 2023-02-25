@@ -26,7 +26,7 @@ conversion to SVG, the required `dvisvgm` option is set too:
 
 ::::
 
-::: {.imagify .fitch}
+::: {.fitch}
 
 A fitch-style proof using a local package:
 
@@ -48,5 +48,3 @@ A fitch-style proof using a local package:
 ```
 
 :::
-
-

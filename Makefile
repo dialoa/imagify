@@ -107,8 +107,9 @@ test: $(FILTER_FILE) test/input.md test/test.yaml
 # would cause it to be regenerated on each run, making the test
 # pointless.
 .PHONY: generate
-generate: $(FILTER_FILE) test/input.md test/test.yaml
+generate: $(FILTER_FILE) test/input.md test/test.yaml test/test_meta.yaml
 	@for ext in $(FORMAT) ; do \
+		echo Creating test/expected.$$ext;\
 		$(PANDOC) --defaults test/test.yaml --to $$ext \
 		--output test/expected.$$ext ;\
 	done
@@ -120,7 +121,7 @@ generate: $(FILTER_FILE) test/input.md test/test.yaml
 ## Generate the expected output from the source file (if configured)
 ifneq ($(SOURCE_MAIN), )
 .PHONY: run
-run: $(SOURCE_FILES) test/input.md test/test.yaml
+run: $(SOURCE_FILES) test/input.md test/test.yaml  test/test_meta.yaml
 	@for ext in $(FORMAT) ; do \
 		$(PANDOC) test/input.md \
 		-L $(SOURCE_DIR)/$(SOURCE_MAIN).lua \
