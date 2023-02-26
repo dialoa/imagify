@@ -136,13 +136,15 @@ endif
 #
 # Website
 #
+# NB on GitHub we use the pandoc/latex image
+# which doesn't include the standalone.cls
 
 ## Generate website files in _site
 .PHONY: website
 website: _site/index.html _site/$(FILTER_FILE)
 
 _site/index.html: README.md test/input.md $(FILTER_FILE) .tools/docs.lua \
-		_site/output.html _site/style.css
+		_site/output.html _site/style.css _tmp/standalone.cls
 	@mkdir -p _site
 	$(PANDOC) \
 	    --standalone \
@@ -169,6 +171,12 @@ _site/output.html: $(FILTER_FILE) test/input.md test/test.yaml
 _site/$(FILTER_FILE): $(FILTER_FILE)
 	@mkdir -p _site
 	(cd _site && ln -sf ../$< $<)
+
+_tmp/standalone.cls:
+	@mkdir -p _tmp
+	curl \
+		--output $@ \
+		'https://raw.githubusercontent.com/MartinScharrer/standalone/main/standalone.cls'
 
 #
 # Quarto extension
