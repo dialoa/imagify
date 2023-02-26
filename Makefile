@@ -144,7 +144,7 @@ endif
 website: _site/index.html _site/$(FILTER_FILE)
 
 _site/index.html: README.md test/input.md $(FILTER_FILE) .tools/docs.lua \
-		_site/output.html _site/style.css _tmp/standalone.cls
+		_site/output.html _site/style.css test/standalone.cls
 	@mkdir -p _site
 	$(PANDOC) \
 	    --standalone \
@@ -172,7 +172,7 @@ _site/$(FILTER_FILE): $(FILTER_FILE)
 	@mkdir -p _site
 	(cd _site && ln -sf ../$< $<)
 
-_tmp/standalone.cls:
+test/standalone.cls:
 	@mkdir -p _tmp
 	curl \
 		--output $@ \
