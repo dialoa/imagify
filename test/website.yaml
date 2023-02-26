@@ -3,14 +3,6 @@ output-file: _site/output.html
 standalone: true
 filters:
   - {type: lua, path: imagify.lua}
-metadata:
-  imagify:
-    scope: all
-    embed: true
-    pdf-engine: latex
-    keep-sources: false
-    zoom: 1.5
-    classes: 
-      pre-render:
-          zoom: 4 # will show if it's not overriden
-          block-style: "border: 1px dotted blue;"
+# Metadata must be provided in a separate file to be parsed
+# as Markdown <https://pandoc.org/MANUAL.html#reader-options-1>
+metadata-file: ${.}/test_meta.yaml

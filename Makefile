@@ -169,15 +169,16 @@ _site/output.html: $(FILTER_FILE) test/input.md test/test.yaml \
 	    --defaults=test/website.yaml \
 	    --output=$@
 
-_site/$(FILTER_FILE): $(FILTER_FILE)
-	@mkdir -p _site
-	(cd _site && ln -sf ../$< $<)
-
-# @TODO check first if standalone is available locally
 test/standalone.cls:
 	curl \
 		--output $@ \
 		'https://raw.githubusercontent.com/MartinScharrer/standalone/main/standalone.cls'
+	
+
+_site/$(FILTER_FILE): $(FILTER_FILE)
+	@mkdir -p _site
+	(cd _site && ln -sf ../$< $<)
+
 
 #
 # Quarto extension

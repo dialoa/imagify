@@ -657,14 +657,27 @@ local function latexToImage(source, renderOptions)
   local latex_out_format = ext == 'svg' and 'dvi' or 'pdf'
   local debug = renderOptions.debug or false
   local folder = filterOptions.output_folder or ''
-  local jobFolder = makeAbsolute(PANDOC_STATE.output_file 
+  local jobOutFolder = makeAbsolute(PANDOC_STATE.output_file 
     and path.directory(PANDOC_STATE.output_file) or '')
-  local texinputs = renderOptions.texinputs
-    or jobFolder..'//:' 
+  local texinputs = renderOptions.texinputs or nil
   -- to be created
   local folderAbs, file, fileAbs, texfileAbs = '', '', '', ''
   local fileRelativeToJob = ''
   local success, result
+
+  -- default texinputs: all sources folders and output folder
+  -- and directory folder?
+  if not texinputs then 
+    texinputs = system.get_working_directory()..'//:'
+    for _,filepath in ipairs(PANDOC_STATE.input_files) do
+      texinputs = texinputs
+        .. makeAbsolute(filepath and path.directory(filepath) or '')
+        .. '//:'
+    end
+    texinputs = texinputs.. jobOutFolder .. '//:'
+  end
+
+  
 
   -- if we output files prepare folder and file names
   -- we need absolute paths to move things out of the temp dir
@@ -682,7 +695,7 @@ local function latexToImage(source, renderOptions)
     end
 
     -- path to the image relative to document output
-    fileRelativeToJob = path.make_relative(fileAbs, jobFolder)
+    fileRelativeToJob = path.make_relative(fileAbs, jobOutFolder)
 
     -- if lazy, don't regenerate files that already exist
     if not embed and lazy and fileExists(fileAbs) then 
