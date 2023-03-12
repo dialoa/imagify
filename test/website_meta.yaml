@@ -1,0 +1,16 @@
+imagify:
+  scope: all
+  debug: false
+  embed: true
+  lazy: false
+  output-folder: test/_imagify_files
+  pdf-engine: latex
+  zoom: 1.5
+imagify-classes: 
+  highlightme:
+      zoom: 4 # will show if it's not overriden
+      block-style: "border: 1px solid red;"
+      debug: false
+  fitch:
+    header-includes: \usepackage{fitch}
+    debug: false
