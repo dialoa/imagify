@@ -30,6 +30,7 @@ jobs:
         run: |
           docker build -t custom-pandoc-latex -f .tools/Dockerfile .
       - name: Render Website
+        run: |
           make -B website \
             SOURCE_DIR="" \
             PANDOC="docker run --rm --volume $(pwd):/data \
