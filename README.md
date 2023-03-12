@@ -394,7 +394,7 @@ The following Pandoc LaTeX output options are read:
 - `linkcolor`, `filecolor`, `citecolor`, `urlcolor`, `toccolor`,
 - `urlstyle`.
 
-See [PManTeX] for details. 
+See [Pandoc manual][PManTeX] for details. 
 
 These are passed to the default Pandoc template 
 that is used to create. The document class is set
