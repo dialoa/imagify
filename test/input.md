@@ -43,6 +43,4 @@ $$\begin{nd}
   \have[~] {6} {C \lor D}
 \end{nd}$$
 
-```
-
 :::
