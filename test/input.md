@@ -26,11 +26,12 @@ $$P = \frac{T}{V}$$
 
 ::: {.highlightme zoom='1'}
 
-This next formula is imagified with class-selected options: 
-$$P = \frac{T}{V}$$
-They display the formula as an inline rather than a block,
-added a red border. We've also locally specified a zoom value
-of 1. 
+This next formula is imagified with options provided for elements
+of a custom class, `highlightme`: 
+$$P = \frac{T}{V}$$.
+They display the formula as an inline instead of a block and
+add a red border. They also specify a large zoom (4) but we've
+overridden it and locally specified a zoom of 1.
 
 :::
 
