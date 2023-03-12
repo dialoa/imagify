@@ -30,9 +30,7 @@ conversion to SVG, the required `dvisvgm` option is set too:
 
 A fitch-style proof using a local package:
 
-```{=latex}
-
-\begin{nd}
+$$\begin{nd}
   \hypo[~] {1} {A \lor B}
   \open
   \hypo[~] {2} {A}
@@ -43,7 +41,7 @@ A fitch-style proof using a local package:
   \have[~] {5} {D}
   \close
   \have[~] {6} {C \lor D}
-\end{nd}
+\end{nd}$$
 
 ```
 

@@ -118,7 +118,7 @@ generate: $(FILTER_FILE) test/input.md test/test.yaml test/test_meta.yaml
 # Run from source
 #
 
-## Generate the expected output from the source file (if configured)
+## Generates expected output from the filter's source code (if configured)
 ifneq ($(SOURCE_MAIN), )
 .PHONY: run
 run: $(SOURCE_FILES) test/input.md test/test.yaml  test/test_meta.yaml
@@ -130,14 +130,13 @@ run: $(SOURCE_FILES) test/input.md test/test.yaml  test/test_meta.yaml
 		--output test/expected.$$ext ; \
 	done
 else
+.PHONY: run
 run: generate
 endif
 
 #
 # Website
 #
-# NB on GitHub we use the pandoc/latex image
-# which doesn't include the standalone.cls
 
 ## Generate website files in _site
 .PHONY: website
@@ -162,18 +161,11 @@ _site/style.css:
 	    --output $@ \
 	    'https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/light.css'
 
-_site/output.html: $(FILTER_FILE) test/input.md test/test.yaml \
-	test/standalone.cls
+_site/output.html: $(FILTER_FILE) test/input.md test/test.yaml 
 	@mkdir -p _site
 	$(PANDOC) \
 	    --defaults=test/website.yaml \
 	    --output=$@
-
-test/standalone.cls:
-	curl \
-		--output $@ \
-		'https://raw.githubusercontent.com/MartinScharrer/standalone/main/standalone.cls'
-	
 
 _site/$(FILTER_FILE): $(FILTER_FILE)
 	@mkdir -p _site
@@ -251,7 +243,7 @@ setup: update-name
 # Helpers
 #
 
-## Clean regenerables files
+## Clean regenerable files
 .PHONY: clean
 clean:
 	rm -f _site/output.md _site/index.html _site/style.css

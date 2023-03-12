@@ -196,7 +196,8 @@ local function runLaTeX(source, options)
     cmd = pdf_engine..' '
     ..concatStrings(latex_args, ' ')
     ..' '..source..' 2>&1 > /dev/null '..'; '
-    success = os.execute(env..cmd..cmd)
+    cmd = cmd..cmd -- two runs needed
+    success = os.execute(env..cmd)
   end
 
   if success then
@@ -676,8 +677,6 @@ local function latexToImage(source, renderOptions)
     end
     texinputs = texinputs.. jobOutFolder .. '//:'
   end
-
-  
 
   -- if we output files prepare folder and file names
   -- we need absolute paths to move things out of the temp dir
