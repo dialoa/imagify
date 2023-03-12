@@ -896,7 +896,8 @@ local function latexToImage(source, renderOptions)
 
     -- if lazy, don't regenerate files that already exist
     if not embed and lazy and fileExists(fileAbs) then 
-      return fileRelativeToJob
+      success, result = true, fileRelativeToJob
+      return success, result
     end
 
   end

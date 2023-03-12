@@ -2,7 +2,7 @@ imagify:
   scope: all
   debug: false
   embed: false
-  lazy: false
+  lazy: true
   output-folder: test/_imagify_files
   pdf-engine: latex
   zoom: 1.5
