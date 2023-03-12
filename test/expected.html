@@ -172,17 +172,38 @@
 src="_imagify_files/834aba06fd119cd000555eac54ad1f6126400419.svg"
 title="E = mc^2" style="vertical-align: baseline; "
 alt="Image based on the LaTeX code:E = mc^2" /></span>.</p>
+<div class="imagify">
+<p>For some inline formulas, such as <img
+src="_imagify_files/36b25e3fca1c4260547217f33ac61ad3b355d7c5.svg"
+title="x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}"
+style="vertical-align: baseline; "
+alt="Image based on the LaTeX code:x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}" />,
+the default <code>baseline</code> vertical alignment is not ideal. You
+can adjust it manually, using a negative value to lower the image below
+the baseline: <span class="imagify" data-vertical-align="-.5em"><img
+src="_imagify_files/36b25e3fca1c4260547217f33ac61ad3b355d7c5.svg"
+title="x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}"
+style="vertical-align: -.5em; "
+alt="Image based on the LaTeX code:x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}" /></span>.
+In this case I’ve specified a <code>-0.5em</code> value, which is about
+half a baseline down.</p>
+</div>
+<p>To check that the filter processes elements of arbitrary depth, we’ve
+placed the next bit within a dummy Div block.</p>
 <div class="arbitraryDiv">
-<p>Imagify a display formula: <img
+<p>The display formula below is not explicitly marked to be imagified.
+However, it will be imagified in the filter’s <code>scope</code> option
+is set to <code>all</code>: <img
 src="_imagify_files/7312abb1b34a423140f8d5d76d8ac4bb66776191.svg"
 title="P = \frac{T}{V}" style="display:block; margin: .5em auto;"
 alt="Image based on the LaTeX code:P = \frac{T}{V}" /></p>
 <div class="highlightme" data-zoom="1">
-<p>Imagify the following too, with a class-selected block style (red
-border, inline) and a locally specified zoom of 1. <img
+<p>This next formula is imagified with class-selected options: <img
 src="_imagify_files/5e57052914c8be3062d7efe2237160c1e3c5bc11.svg"
 title="P = \frac{T}{V}" style="border: 1px solid red;"
-alt="Image based on the LaTeX code:P = \frac{T}{V}" /></p>
+alt="Image based on the LaTeX code:P = \frac{T}{V}" /> They display the
+formula as an inline rather than a block, added a red border. We’ve also
+locally specified a zoom value of 1.</p>
 </div>
 <p>The filter automatically recognize TikZ pictures and loads the TikZ
 package with the <code>tikz</code> option for the
@@ -190,16 +211,47 @@ package with the <code>tikz</code> option for the
 conversion to SVG, the required <code>dvisvgm</code> option is set
 too:</p>
 <p><img
-src="_imagify_files/ed6f8fefa6cc4c2fcf8b75467758d1239a7b2711.svg"
-title="\begin{tikzpicture}
-  \draw (-1.5,0) -- (1.5,0);
-  \draw (0,-1.5) -- (0,1.5);
+src="_imagify_files/c7539752ea4b02458bde623378b40c9a0d11141a.svg"
+title="\usetikzlibrary{intersections}
+\begin{tikzpicture}[scale=3,line cap=round,
+% Styles
+axes/.style=,
+important line/.style={very thick}]
+
+% Colors
+  \colorlet{anglecolor}{green!50!black}
+  \colorlet{sincolor}{red}
+  \colorlet{tancolor}{orange!80!black}
+  \colorlet{coscolor}{blue}
+
+% The graphic
+\draw[help lines,step=0.5cm] (-1.4,-1.4) grid (1.4,1.4);
+\draw (0,0) circle [radius=1cm];
+\begin{scope}[axes]
+  \draw[-&gt;] (-1.5,0) -- (1.5,0) node[right] {$x$} coordinate(x axis);
+  \draw[-&gt;] (0,-1.5) -- (0,1.5) node[above] {$y$} coordinate(y axis);
+  \foreach \x/\xtext in {-1, -.5/-\frac{1}{2}, 1}
+    \draw[xshift=\x cm] (0pt,1pt) -- (0pt,-1pt) node[below,fill=white] {$\xtext$};
+  \foreach \y/\ytext in {-1, -.5/-\frac{1}{2}, .5/\frac{1}{2}, 1}
+    \draw[yshift=\y cm] (1pt,0pt) -- (-1pt,0pt) node[left,fill=white] {$\ytext$};
+\end{scope}
+
+\filldraw[fill=green!20,draw=anglecolor] (0,0) -- (3mm,0pt) arc [start angle=0, end angle=30, radius=3mm];
+\draw (15:2mm) node[anglecolor] {$\alpha$};
+\draw[important line,sincolor] (30:1cm) -- node[left=1pt,fill=white] {$\sin \alpha$} (30:1cm |- x axis); \draw[important line,coscolor] (30:1cm |- x axis) -- node[below=2pt,fill=white] {$\cos \alpha$} (0,0);
+
+\path [name path=upward line] (1,0) -- (1,1);
+\path [name path=sloped line] (0,0) -- (30:1.5cm);
+
+\draw [name intersections={of=upward line and sloped line, by=t}] [very thick,orange] (1,0) -- node [right=1pt,fill=white] {$\displaystyle \tan \alpha \color{black}=\frac{{\color{red}\sin \alpha}}{\color{blue}\cos \alpha}$} (t);
+\draw (0,0) -- (t);
 \end{tikzpicture}" style="display:block; margin: .5em auto;"
-alt="Image based on the LaTeX code:\begin{tikzpicture} \draw (-1.5,0) -- (1.5,0); \draw (0,-1.5) -- (0,1.5); \end{tikzpicture}" /></p>
-<p>.</p>
+alt="Image based on the LaTeX code:\usetikzlibrary{intersections} \begin{tikzpicture}[scale=3,line cap=round, % Styles axes/.style=, important line/.style={very thick}] % Colors \colorlet{anglecolor}{green!50!black} \colorlet{sincolor}{red} \colorlet{tancolor}{orange!80!black} \colorlet{coscolor}{blue} % The graphic \draw[help lines,step=0.5cm] (-1.4,-1.4) grid (1.4,1.4); \draw (0,0) circle [radius=1cm]; \begin{scope}[axes] \draw[-&gt;] (-1.5,0) -- (1.5,0) node[right] {$x$} coordinate(x axis); \draw[-&gt;] (0,-1.5) -- (0,1.5) node[above] {$y$} coordinate(y axis); \foreach \x/\xtext in {-1, -.5/-\frac{1}{2}, 1} \draw[xshift=\x cm] (0pt,1pt) -- (0pt,-1pt) node[below,fill=white] {$\xtext$}; \foreach \y/\ytext in {-1, -.5/-\frac{1}{2}, .5/\frac{1}{2}, 1} \draw[yshift=\y cm] (1pt,0pt) -- (-1pt,0pt) node[left,fill=white] {$\ytext$}; \end{scope} \filldraw[fill=green!20,draw=anglecolor] (0,0) -- (3mm,0pt) arc [start angle=0, end angle=30, radius=3mm]; \draw (15:2mm) node[anglecolor] {$\alpha$}; \draw[important line,sincolor] (30:1cm) -- node[left=1pt,fill=white] {$\sin \alpha$} (30:1cm |- x axis); \draw[important line,coscolor] (30:1cm |- x axis) -- node[below=2pt,fill=white] {$\cos \alpha$} (0,0); \path [name path=upward line] (1,0) -- (1,1); \path [name path=sloped line] (0,0) -- (30:1.5cm); \draw [name intersections={of=upward line and sloped line, by=t}] [very thick,orange] (1,0) -- node [right=1pt,fill=white] {$\displaystyle \tan \alpha \color{black}=\frac{{\color{red}\sin \alpha}}{\color{blue}\cos \alpha}$} (t); \draw (0,0) -- (t); \end{tikzpicture}" /></p>
 </div>
 <div class="fitch">
-<p>A fitch-style proof using a local package:</p>
+<p>We can also use LaTeX packages that are provided in the document’s
+folder, here <code>fitch.sty</code> (a package not available on
+CTAN):</p>
 <p><img
 src="_imagify_files/4af68d35a503970cd2da8198ef155adca25a60e8.svg"
 title="\begin{nd}

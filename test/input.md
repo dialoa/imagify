@@ -4,14 +4,33 @@ title: "Imagify Example"
 
 Imagify the following span: [the formula $E = mc^2$]{.imagify}. 
 
+::: imagify
+
+For some inline formulas, such as $x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}$, the default `baseline`
+vertical alignment is not ideal. You can adjust it manually, using a negative
+value to lower the image below the baseline: 
+[$x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}$]{.imagify vertical-align="-.5em"}. In this case
+ I've specified a `-0.5em` value, which is about half a baseline down. 
+
+:::
+
+To check that the filter processes elements of arbitrary depth, we've 
+placed the next bit within a dummy Div block. 
+
 :::: arbitraryDiv
 
-Imagify a display formula: $$P = \frac{T}{V}$$
+The display formula below is not explicitly marked to be imagified. 
+However, it will be imagified in the filter's `scope` option is set
+to `all`:
+$$P = \frac{T}{V}$$
 
 ::: {.highlightme zoom='1'}
 
-Imagify the following too, with a class-selected block style (red border,
-inline) and a locally specified zoom of 1. $$P = \frac{T}{V}$$
+This next formula is imagified with class-selected options: 
+$$P = \frac{T}{V}$$
+They display the formula as an inline rather than a block,
+added a red border. We've also locally specified a zoom value
+of 1. 
 
 :::
 
@@ -19,16 +38,47 @@ The filter automatically recognize TikZ pictures and loads the TikZ package
 with the `tikz` option for the `standalone`. When `dvisvgm` is used for 
 conversion to SVG, the required `dvisvgm` option is set too:
 
-\begin{tikzpicture}
-  \draw (-1.5,0) -- (1.5,0);
-  \draw (0,-1.5) -- (0,1.5);
-\end{tikzpicture}.
+\usetikzlibrary{intersections}
+\begin{tikzpicture}[scale=3,line cap=round,
+% Styles
+axes/.style=,
+important line/.style={very thick}]
+
+% Colors
+  \colorlet{anglecolor}{green!50!black}
+  \colorlet{sincolor}{red}
+  \colorlet{tancolor}{orange!80!black}
+  \colorlet{coscolor}{blue}
+
+% The graphic
+\draw[help lines,step=0.5cm] (-1.4,-1.4) grid (1.4,1.4);
+\draw (0,0) circle [radius=1cm];
+\begin{scope}[axes]
+  \draw[->] (-1.5,0) -- (1.5,0) node[right] {$x$} coordinate(x axis);
+  \draw[->] (0,-1.5) -- (0,1.5) node[above] {$y$} coordinate(y axis);
+  \foreach \x/\xtext in {-1, -.5/-\frac{1}{2}, 1}
+    \draw[xshift=\x cm] (0pt,1pt) -- (0pt,-1pt) node[below,fill=white] {$\xtext$};
+  \foreach \y/\ytext in {-1, -.5/-\frac{1}{2}, .5/\frac{1}{2}, 1}
+    \draw[yshift=\y cm] (1pt,0pt) -- (-1pt,0pt) node[left,fill=white] {$\ytext$};
+\end{scope}
+
+\filldraw[fill=green!20,draw=anglecolor] (0,0) -- (3mm,0pt) arc [start angle=0, end angle=30, radius=3mm];
+\draw (15:2mm) node[anglecolor] {$\alpha$};
+\draw[important line,sincolor] (30:1cm) -- node[left=1pt,fill=white] {$\sin \alpha$} (30:1cm |- x axis); \draw[important line,coscolor] (30:1cm |- x axis) -- node[below=2pt,fill=white] {$\cos \alpha$} (0,0);
+
+\path [name path=upward line] (1,0) -- (1,1);
+\path [name path=sloped line] (0,0) -- (30:1.5cm);
+
+\draw [name intersections={of=upward line and sloped line, by=t}] [very thick,orange] (1,0) -- node [right=1pt,fill=white] {$\displaystyle \tan \alpha \color{black}=\frac{{\color{red}\sin \alpha}}{\color{blue}\cos \alpha}$} (t);
+\draw (0,0) -- (t);
+\end{tikzpicture}
 
 ::::
 
 ::: {.fitch}
 
-A fitch-style proof using a local package:
+We can also use LaTeX packages that are provided in the document's folder, 
+here `fitch.sty` (a package not available on CTAN):
 
 $$\begin{nd}
   \hypo[~] {1} {A \lor B}

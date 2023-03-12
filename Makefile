@@ -247,3 +247,4 @@ setup: update-name
 .PHONY: clean
 clean:
 	rm -f _site/output.md _site/index.html _site/style.css
+	rm -rf test/_imagify_files
