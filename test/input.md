@@ -9,7 +9,7 @@ Imagify the following span: [the formula $E = mc^2$]{.imagify}.
 For some inline formulas, such as $x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}$, the default `baseline`
 vertical alignment is not ideal. You can adjust it manually, using a negative
 value to lower the image below the baseline: 
-[$x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}$]{.imagify vertical-align="-.5em"}. In this case
+[$x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}$]{.imagify vertical-align="-.5em"}. In this case,
  I've specified a `-0.5em` value, which is about half a baseline down. 
 
 :::
