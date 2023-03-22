@@ -1,5 +1,6 @@
 FROM pandoc/latex:latest
-RUN tlmgr install \
+RUN update-tlmgr-latest --update && \
+    tlmgr install \
     standalone \
     dvisvgm
 ENTRYPOINT [ "/usr/local/bin/pandoc" ]
