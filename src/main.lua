@@ -4,7 +4,7 @@
 @author Julien Dutant <julien.dutant@philosophie.ch>
 @copyright 2021-2023 Philosophie.ch
 @license MIT - see LICENSE file for details.
-@release 0.2
+@release 0.3.0
 
 Converts some or all LaTeX code in a document into 
 images.

@@ -1,6 +1,6 @@
 name: imagify
 author: Julien Dutant
-version: 0.0.0
+version: 0.3.0
 contributes:
   filters:
     - imagify.lua
