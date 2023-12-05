@@ -6,11 +6,14 @@ Imagify - Pandoc/Quarto filter to convert selected LaTeX into images
 Lua filter to convert some or all LaTeX code in a document into 
 images. 
 
-Copyright 2022-2023 Philosophie.ch <https://philosophie.ch>. 
-Maintained by Julien Dutant <https://github.com/jdutant>.
+Copyright 2022-2023 [Philosophie.ch][Philoch]. Maintained by
+[Julien Dutant][JDutant].
 
 [CI badge]: https://img.shields.io/github/actions/workflow/status/dialoa/imagify/ci.yaml?branch=main
 [CI workflow]: https://github.com/dialoa/imagify/actions/workflows/ci.yaml
+
+[Philoch]: https://philosophie.ch
+[JDutant]: https://github.com/jdutant
 
 Overview
 --------------------------------------------------------------------
