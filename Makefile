@@ -15,13 +15,24 @@ SOURCE_MODULES := $(SOURCE_FILES:$(SOURCE_DIR)/%.lua=%)
 SOURCE_MODULES := $(SOURCE_MODULES:main=)
 SOURCE_MAIN = main
 
-# Test files
-TEST_DIR := test
-TEST_FILES := $(TEST_DIR)/input.md \
+# Pandoc example file
+TEST_DIR := example-pandoc
+TEST_SRC := $(TEST_DIR)/example.md
+TEST_DEFAULTS := $(TEST_DIR)/example_defaults.yaml
+TEST_FILES := $(TEST_SRC) \
 	$(wildcard $(TEST_DIR)/figure*.tikz) \
 	$(wildcard $(TEST_DIR)/figure*.tex) \
-	$(wildcard $(TEST_DIR)/test*.yaml) 
-	
+	$(wildcard $(TEST_DIR)/test*.yaml)
+
+# Quarto test dir
+QUARTO_DIR := example-quarto
+QUARTO_FILES := $(wildcard $(QUARTO_DIR)/*.qmd)
+
+# Docs
+# Source and defaults for docs version of Pandoc example output
+DOCS_SRC = docs/manual.md
+DOCS_DEFAULTS := $(TEST_DIR)/website_defaults.yaml
+
 # Allow to use a different pandoc binary, e.g. when testing.
 PANDOC ?= pandoc
 # Allow to adjust the diff command if necessary
@@ -64,7 +75,7 @@ help:
 #
 # Build
 # 
-# automatically triggered on `test`, `generate` or `run`
+# automatically triggered on `test` and `generate`
 
 ## Build the filter file from sources (requires luacc)
 # If SOURCE_DIR is not empty, combine source files with
@@ -94,7 +105,7 @@ _check_luacc:
 
 endif
 #
-# Test
+# Pandoc Test
 #
 
 ## Test that running the filter on the sample input yields expected outputs
@@ -106,10 +117,11 @@ endif
 .PHONY: test
 test: $(FILTER_FILE) $(TEST_FILES)
 	@for ext in $(FORMAT) ; do \
-		$(PANDOC) --defaults test/test.yaml --to $$ext \
-			--output test/out.$$ext; \
-		$(DIFF) test/expected.$$ext test/out.$$ext; \
-		rm test/out.$$ext; \
+		$(PANDOC) --defaults $(TEST_DEFAULTS) \
+			--to $$ext \
+			--output $(TEST_DIR)/out.$$ext; \
+		$(DIFF) $(TEST_DIR)/expected.$$ext $(TEST_DIR)/out.$$ext; \
+		rm $(TEST_DIR)/out.$$ext; \
 	done
 
 ## Generate the expected output
@@ -119,30 +131,21 @@ test: $(FILTER_FILE) $(TEST_FILES)
 .PHONY: generate
 generate: $(FILTER_FILE) $(TEST_FILES)
 	@for ext in $(FORMAT) ; do \
-		echo Creating test/expected.$$ext;\
-		$(PANDOC) --defaults test/test.yaml --to $$ext \
-		--output test/expected.$$ext ;\
+		echo Creating $(TEST_DIR)/expected.$$ext;\
+		$(PANDOC) --defaults $(TEST_DEFAULTS) \
+			--to $$ext \
+			--output $(TEST_DIR)/expected.$$ext ;\
 	done
 
 #
-# Run from source
+# Quarto test
 #
-
-## Generates expected output from the filter's source code (if configured)
-ifneq ($(SOURCE_MAIN), )
-.PHONY: run
-run: $(SOURCE_FILES)  $(TEST_FILES)
-	@for ext in $(FORMAT) ; do \
-		$(PANDOC) test/input.md \
-		-L $(SOURCE_DIR)/$(SOURCE_MAIN).lua \
-		--standalone \
-		--to $$ext \
-		--output test/expected.$$ext ; \
+.PHONY: quarto
+quarto: $(FILTER_FILE) $(QUARTO_FILES)
+	echo $(QUARTO_FILES)
+	@for fmt in $(FORMAT) ; do \
+		quarto render $(QUARTO_FILES) --to $$fmt; \
 	done
-else
-.PHONY: run
-run: generate
-endif
 
 #
 # Website
@@ -152,13 +155,13 @@ endif
 .PHONY: website
 website: _site/index.html _site/$(FILTER_FILE)
 
-_site/index.html: README.md test/input.md $(FILTER_FILE) .tools/docs.lua \
+_site/index.html: $(DOCS_SRC) $(TEST_FILES) $(FILTER_FILE) .tools/docs.lua \
 		_site/output.html _site/style.css
 	@mkdir -p _site
 	$(PANDOC) \
 	    --standalone \
 	    --lua-filter=.tools/docs.lua \
-	    --metadata=sample-file:test/input.md \
+	    --metadata=sample-file:$(TEST_SRC) \
 	    --metadata=result-file:_site/output.html \
 	    --metadata=code-file:$(FILTER_FILE) \
 	    --css=style.css \
@@ -171,16 +174,16 @@ _site/style.css:
 	    --output $@ \
 	    'https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/light.css'
 
-_site/output.html: $(FILTER_FILE) test/input.md test/test.yaml 
+_site/output.html: $(FILTER_FILE) $(TEST_SRC) $(DOCS_DEFAULTS)
 	@mkdir -p _site
 	$(PANDOC) \
-	    --defaults=test/website.yaml \
+	    --defaults=$(DOCS_DEFAULTS) \
+		--to=html \
 	    --output=$@
 
 _site/$(FILTER_FILE): $(FILTER_FILE)
 	@mkdir -p _site
 	(cd _site && ln -sf ../$< $<)
-
 
 #
 # Quarto extension
@@ -256,5 +259,10 @@ setup: update-name
 ## Clean regenerable files
 .PHONY: clean
 clean:
-	rm -f _site/output.md _site/index.html _site/style.css
-	rm -rf test/_imagify_files
+	rm -rf _site/*
+	rm -rf $(TEST_DIR)/expected.*
+	rm -rf _imagify_files
+	rm -f $(QUARTO_DIR)/example.html
+	rm -rf $(QUARTO_DIR)/example_files
+	rm -rf $(QUARTO_DIR)/_imagify_files
+

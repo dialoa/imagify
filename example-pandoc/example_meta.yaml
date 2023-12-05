@@ -1,9 +1,15 @@
+## For LaTeX/PDF output unimagified bits require TikZ and fitch.sty
+header-includes:
+- |
+  ```{=latex}
+  \usepackage{tikz}
+  \usepackage{example-pandoc/fitch}
+  ```
 imagify:
   scope: all
-  debug: false
-  embed: true
-  lazy: false
-  output-folder: test/_imagify_files
+  embed: false
+  lazy: true
+  output-folder: _imagify_files
   pdf-engine: latex
   zoom: 1.5
 imagify-classes: 

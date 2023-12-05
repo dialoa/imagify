@@ -1,0 +1,17 @@
+# Pandoc defaults for generating docs example output
+
+# Needed to set imagify/output-folder to _site
+# in website_medata.yaml
+
+verbosity: ERROR
+input-files:
+- ${.}/example.md
+standalone: true
+filters:
+  - {type: lua, path: imagify.lua}
+# Metadata must be provided in a separate file to be parsed
+# as Markdown <https://pandoc.org/MANUAL.html#reader-options-1>
+metadata-file: ${.}/website_meta.yaml
+# Resource path needed to find `.tex`/`.tikz` figures in this subfolder
+resource-path:
+- ${.}

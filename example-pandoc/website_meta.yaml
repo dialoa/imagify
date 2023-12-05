@@ -1,9 +1,8 @@
 imagify:
   scope: all
-  debug: false
   embed: false
-  lazy: true
-  output-folder: test/_imagify_files
+  lazy: false
+  output-folder: _site/_imagify_files/
   pdf-engine: latex
   zoom: 1.5
 imagify-classes: 

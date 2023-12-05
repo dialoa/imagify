@@ -1,22 +1,45 @@
 ---
 title: "Imagify Example"
-## For LaTeX/PDF output unimagified bits require TikZ and fitch.sty
-header-includes: |
-  ```{=latex}
-  \usepackage{tikz}
-  \usepackage{test/fitch}
-  ```
+filters:
+- ../imagify.lua
+imagify:
+  scope: all
+  embed: false
+  lazy: true
+  output-folder: _imagify_files
+  pdf-engine: latex
+  zoom: 1.5
+imagify-classes: 
+  highlightme:
+      zoom: 4 # will show if it's not overriden
+      block-style: "border: 1px solid red;"
+      debug: false
+  fitch:
+    header-includes: \usepackage{fitch}
+    debug: false
+    
+format:
+  html: 
+    toc: true
+  pdf: 
+    include-in-header: |
+      \usepackage{tikz}
+      \usepackage{example-pandoc/fitch}
+
 ---
 
 Imagify the following span: [the formula $E = mc^2$]{.imagify}. 
 
+
 ::: imagify
 
-For some inline formulas, such as $x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}$, the default `baseline`
-vertical alignment is not ideal. You can adjust it manually, using a negative
-value to lower the image below the baseline: 
-[$x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}$]{.imagify vertical-align="-.5em"}. In this case,
- I've specified a `-0.5em` value, which is about half a baseline down. 
+For some inline formulas, such as
+$x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}$, the default `baseline` vertical
+alignment is not ideal. You can adjust it manually, using a negative
+value to lower the image below the baseline:
+ [$x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}$]{.imagify
+ vertical-align="-.5em"}. In this case, I've specified a `-0.5em`
+ value, which is about half a baseline down. 
 
 :::
 
@@ -41,9 +64,9 @@ overridden it and locally specified a zoom of 1.
 
 :::
 
-The filter automatically recognize TikZ pictures and loads the TikZ package
-with the `tikz` option for the `standalone`. When `dvisvgm` is used for 
-conversion to SVG, the required `dvisvgm` option is set too:
+The filter automatically recognizes TikZ pictures and loads the TikZ
+package with the `tikz` option for the `standalone`. When `dvisvgm` is
+used for conversion to SVG, the required `dvisvgm` option is set too:
 
 \usetikzlibrary{intersections}
 \begin{tikzpicture}[scale=3,line cap=round,
@@ -87,9 +110,9 @@ filter converts them to PDF (for LaTeX/PDF output) or SVG as required.
 That is useful to create cross-referencable figures 
 with Pandoc-Crossref and Quarto.  
 
-![Figure 1 is a separate tikz file](figure1.tikz)
+![Figure 1 is a separate TikZ file](figure1.tikz)
 
-![Figure 2 is a separate tex file](figure2.tex)
+![Figure 2 is a separate LaTeX file](figure2.tex)
 
 Currently, these should not contain a LaTeX preamble or `\begin{document}`.
 There is no difference between `.tikz` and `.tex` sources here. A TikZ 

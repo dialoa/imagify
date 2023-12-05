@@ -2,12 +2,13 @@
 
 verbosity: ERROR
 input-files:
-- ${.}/input.md
-resource-path:
-- ${.}
+- ${.}/example.md
 standalone: true
 filters:
   - {type: lua, path: imagify.lua}
 # Metadata must be provided in a separate file to be parsed
 # as Markdown <https://pandoc.org/MANUAL.html#reader-options-1>
-metadata-file: ${.}/test_meta.yaml
+metadata-file: ${.}/example_meta.yaml
+# Resource path needed to find `.tex`/`.tikz` figures in this subfolder
+resource-path:
+- ${.}
