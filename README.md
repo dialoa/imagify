@@ -23,20 +23,10 @@ doesn't handle all of your LaTeX code.
 
 It also allows you to use `.tex` or `.tikz` elements as
 image source files, which is useful to create cross-referenceable
-figures with [Pandoc-crossref][] or [Quarto][]. Pandoc-crossref
-and Quarto have a sophisticated figure handling with captions
-and cross-references, but they require image elements, e.g.:
+figures with [Pandoc-crossref][] or [Quarto][] without having
+to convert your LaTeX/TikZ code into images first.
 
-``` markdown
-![Caption](figure.png){#fig-1}
-```
-
-To use this with a TikZ/LaTeX figure, you would need to convert it to
-an image first, and ideally PDF for PDF, SVG or PNG for other output
-formats. This filter allows you to use a `.tex`/`.tikz` file as
-source.
-
-Imagify also tries to match your document's LaTeX output settings 
+Imagify tries to match your document's LaTeX output settings 
 (fonts, LaTeX packages, etc.). Its rendering options are otherwise 
 extensively configurable, and different rendering options can 
 be used for different elements. It can embed its images within HTML 
@@ -105,5 +95,6 @@ Development funded by [Philosophie.ch][Philoch].
 [Pandoc]: https://www.pandoc.org
 [Pandoc-crossref]: https://github.com/lierdakil/pandoc-crossref
 [Quarto]: https://quarto.org/
+[QuartoDivFigure]: https://quarto.org/docs/authoring/cross-references-divs.html
 [DvisvgmCTAN]: https://ctan.org/pkg/dvisvgm
 
