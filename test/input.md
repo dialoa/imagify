@@ -1,5 +1,11 @@
 ---
 title: "Imagify Example"
+## For LaTeX/PDF output unimagified bits require TikZ and fitch.sty
+header-includes: |
+  ```{=latex}
+  \usepackage{tikz}
+  \usepackage{test/fitch}
+  ```
 ---
 
 Imagify the following span: [the formula $E = mc^2$]{.imagify}. 
@@ -75,6 +81,23 @@ important line/.style={very thick}]
 \end{tikzpicture}
 
 ::::
+
+We can also use separate `.tex` and `.tikz` files as sources for images. The 
+filter converts them to PDF (for LaTeX/PDF output) or SVG as required. 
+That is useful to create cross-referencable figures 
+with Pandoc-Crossref and Quarto.  
+
+::: imagify
+
+![Figure 1 is a separate tikz file](figure1.tikz)
+
+![Figure 2 is a separate tex file](figure2.tex)
+
+:::
+
+Currently, these should not contain a LaTeX preamble or `\begin{document}`.
+There is no difference between `.tikz` and `.tex` sources here. A TikZ 
+picture in a `.tikz` file should still have `\begin{tikzpicture}` or `\tikz` commands.
 
 ::: {.fitch}
 

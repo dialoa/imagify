@@ -1,7 +1,10 @@
 # Test defaults
 
+verbosity: ERROR
 input-files:
 - ${.}/input.md
+resource-path:
+- ${.}
 standalone: true
 filters:
   - {type: lua, path: imagify.lua}

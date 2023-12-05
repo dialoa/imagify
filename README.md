@@ -73,9 +73,10 @@ output:
 Basic usage
 ------------------------------------------------------------------
 
+### Imagifying
+
 LaTeX elements to be imagified should be placed in a Div block
 with class `imagify`. In markdown source:
-
 
 ~~~~~ markdown
 ::: imagify
@@ -103,11 +104,23 @@ And this raw LaTeX block:
 { \pline{B} }
 ```
 
+This image with a `.tikz` source file will be imagified
+too. In LaTeX/PDF output it will turned into an imported
+PDF image too.
+
+![Figure: a TikZ image](figure1.tikz){#fig-1 .some-attributes}
+
 :::
 ~~~~~
 
-LaTeX math and raw LaTeX elements in the Div are converted to images
-unless the output format is LaTeX/PDF. Images files are placed in
+1. LaTeX math and raw LaTeX elements in the Div are converted to images
+unless the output format is LaTeX/PDF. 
+1. Image elements with a `.tikz` or `.tex` source in the Div are 
+    converted to images in all output formats. Attributes on the image
+    are preserved. This is useful for cross-referencing with Pandoc-Crossref
+    or Quarto. 
+
+Images files are placed in
 an `_imagify` folder created in your current working directory. 
 See the `test/input.md` file for an example. 
 
@@ -123,11 +136,59 @@ package is loaded. If you need a specific library, place
 a `\usetikzlibrary` command at the beginning of your picture
 code.
 
+For Image elements with a `.tikz` or `.tex` source file,
+the source file should not include a LaTeX preamble nor
+`\begin{document}...\end{document}`. The two extensions
+are treated the same way: if the file contains `\tikz`
+or `\begin{tikzpicture}` then TikZ is loaded. 
+
 Custom LaTeX packages not included in standard LaTeX 
 distribution (e.g. `fitch.sty`) can be used, provided
 you place them in the source file's folder or one of 
 its subfolder, or specify an appropriate location
 via the `texinputs` option. 
+
+### Warning: standalone class restrictions
+
+LaTeX elements are imagified using [LaTeX's `standalone`
+class][Standalone], which imposes some unexpected restrictions. 
+If you're only imagifying inline (`$...$`) or display (`$$...$$`) 
+formulas weaved in your document, Imagify handles them
+for you. 
+
+[Standalone]: https://ctan.org/pkg/standalone
+
+However, if you imagify Raw LaTeX
+or from a separate `.tex` or `.tikz` file, your LaTeX
+code must be compatible with the standalone class. The most
+common error is to enter display formulas:
+
+```
+source.md
+
+![Figure 1: my equation](figure.tex)
+
+figure1.tex
+
+$$
+my fancy formula
+$$
+
+```
+When Imagify converts `figure1.tex` LaTeX crashes because 
+the `standalone` class doesn't accept paragraph elements 
+like display formulas. What you need instead is an inline
+formula in 'display style':
+
+``` latex
+figure1.tex
+
+$\displaystyle
+my fancy formula
+$
+```
+
+### Imagifying options
 
 Options are specified via `imagify` and `imagify-classes` 
 metadata variables. For instance, temporarily disable 

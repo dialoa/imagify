@@ -316,17 +316,23 @@ local function ensureList(obj)
 
 end
 
---- latexType: identify the Pandoc type of a LaTeX element.
----@param elem pandoc.Math|pandoc.RawBlock|pandoc.RawInline element
----@return string|nil 'InlineMath', 'DisplayMath', 'Rawblock', 'RawInline'
--- or nil if the element isn't a LaTeX-containing element.
-local function latexType(elem)
-  return elem.mathtype == 'InlineMath' and 'InlineMath'
-  or elem.mathtype == 'DisplayMath' and 'DisplayMath'
-  or (elem.format == 'tex' or elem.format == 'latex')
-  and (elem.t == 'RawBlock' and 'RawBlock'
-    or elem.t == 'RawInline' and 'RawInline')
-  or nil
+---imagifyType: whether an element is imagifiable LaTeX and which type
+---@alias imagifyType nil|'InlineMath'|'DisplayMath'|'RawBlock'|'RawInline'|'TexImage'|'TikzImage'
+---@param elem pandoc.Math|pandoc.RawBlock|pandoc.RawInline|pandoc.Image element
+---@return imagifyType elemType to imagify or nil
+function imagifyType(elem)
+  return elem.t == 'Image' and (
+      elem.src:match('%.tex$') and 'TexImage'
+      or elem.src:match('%.tikz') and 'TikzImage'
+    )
+    or elem.mathtype == 'InlineMath' and 'InlineMath'
+    or elem.mathtype == 'DisplayMath' and 'DisplayMath'
+    or (elem.format == 'tex' or elem.format == 'latex')
+      and (
+        elem.t == 'RawBlock' and 'RawBlock'
+        or elem.t == 'RawInline' and 'RawInline'
+      )
+    or nil
 end
 
 -- ## Smart imagifying functions
@@ -335,7 +341,9 @@ end
 ---@param source string LaTeX source
 ---@return boolean result
 local function usesTikZ(source)
-  return source:match('\\begin{tikzpicture}') and true or false
+  return (source:match('\\begin{tikzpicture}') 
+    or source:match('\\tikz')) and true
+    or false
 end
 
 -- ## Converter functions
@@ -345,6 +353,28 @@ local function dvisvgmVerbosity()
 				or PANDOC_STATE.verbosity == 'WARNING' and '2'
 				or PANDOC_STATE.verbosity == 'INFO' and '4'
         or '2'
+end
+
+---getCodeFromFile: get source code from a file
+---uses Pandoc's resource paths if needed
+---@param src string source file name/path
+---@return string|nil result file contents or nil if not found
+function getCodeFromFile(src)
+  local result
+
+  if fileExists(src) then
+    result = readFile(src)
+  else
+    for _,item in ipairs(PANDOC_STATE.resource_path) do
+      if fileExists(path.join{item, src}) then
+        result = readFile(path.join{item, src}) 
+        break
+      end
+    end
+  end
+
+  return result
+
 end
 
 ---runLaTeX: runs latex engine on file
@@ -406,7 +436,12 @@ local function runLaTeX(source, options)
 
     local result = 'LaTeX compilation failed.\n'
       ..'Command used: '..cmd..'\n'
-    log = readFile(outfile..'.log')
+    local src_code = readFile(source)
+    if src_code then 
+      result = result..'LaTeX source code:\n'
+      result = result..src_code
+    end
+    local log = readFile(outfile..'.log')
     if log then 
       result = result..'LaTeX log:\n'..log
     end
@@ -674,12 +709,12 @@ local function readImagifyClasses(opts)
 end
 
 ---init: read metadata options.
--- classes in `imagify-classes:` override those in `imagify: classes:`
+-- Classes in `imagify-classes:` override those in `imagify: classes:`
+-- If `meta.imagify` isn't a map assume it's a `scope` value 
 -- Special cases:
 --    filterOptions.no_html_embed: Pandoc can't handle URL-embedded images when extract-media is on
 ---@param meta pandoc.Meta doc's metadata
 local function init(meta)
-  -- If `meta.imagify` isn't a map assume it's a `scope` value 
   local userOptions = meta.imagify 
     and (pandoctype(meta.imagify) == 'table' and meta.imagify
       or {scope = stringify(meta.imagify)}
@@ -770,14 +805,14 @@ local function getTemplate(id)
 end
 
 ---buildTeXDoc: turns LaTeX element into a LaTeX doc source.
----@param text string LaTeX code
+---@param code string LaTeX code
 ---@param renderOptions table render options
 ---@param elemType string 'InlineMath', 'DisplayMath', 'RawInline', 'RawBlock'
-local function buildTeXDoc(text, renderOptions, elemType)
+local function buildTeXDoc(code, renderOptions, elemType)
   local endFormat = filterOptions.extensionForOutput[FORMAT]
     or filterOptions.extensionForOutput.default
   elemType = elemType and elemType or 'InlineMath'
-  text = text or ''
+  code = code or ''
   renderOptions = renderOptions or {}
   local template = renderOptions.template or 'default'
   local svg_converter = renderOptions.svg_converter or 'dvisvgm'
@@ -787,19 +822,19 @@ local function buildTeXDoc(text, renderOptions, elemType)
   -- for display math we must use \displaystyle 
   --  see <https://tex.stackexchange.com/questions/50162/how-to-make-a-standalone-document-with-one-equation>
   if elemType == 'DisplayMath' then
-    text = '$\\displaystyle\n'..text..'$'
+    code = '$\\displaystyle\n'..code..'$'
   elseif elemType == 'InlineMath' then
-    text = '$'..text..'$'
+    code = '$'..code..'$'
   end
 
   doc = pandoc.Pandoc(
-    pandoc.RawBlock('latex', text),
+    pandoc.RawBlock('latex', code),
     pandoc.Meta(renderOptions)
   )
 
   -- modify the doc's meta values as required
   --@TODO set class option class=...
-  --Stanlone tikz needs \standaloneenv{tikzpicture}
+  --Standalone tikz needs \standaloneenv{tikzpicture}
   local headinc = ensureList(doc.meta['header-includes'])
   local classopt = ensureList(doc.meta['classoption'])
 
@@ -812,7 +847,7 @@ local function buildTeXDoc(text, renderOptions, elemType)
   
   -- The standalone class option `tikz` needs to be activated
   -- to avoid an empty page of output.
-  if usesTikZ(text) then
+  if usesTikZ(code) then
     headinc:insert(pandoc.RawBlock('latex', '\\usepackage{tikz}'))
     classopt:insert{
       pandoc.Str('tikz')
@@ -829,7 +864,7 @@ local function buildTeXDoc(text, renderOptions, elemType)
 
 end
 
----createUniqueName: return a name that uniquely identify an image.
+---createUniqueName: return unique identifier for an image source.
 ---Combines LaTeX sources and rendering options.
 ---@param source string LaTeX source for the image
 ---@param renderOptions table render options
@@ -986,14 +1021,24 @@ end
 
 ---toImage: convert to pandoc.Image using specified rendering options.
 ---Return the original element if conversion failed.
----@param elem pandoc.Math|pandoc.RawInline|pandoc.RawBlock
+---@param elem pandoc.Math|pandoc.RawInline|pandoc.RawBlock|pandoc.Image
+---@param elemType imagifyType type of element to imagify
 ---@param renderOptions table rendering options
----@return pandoc.Image|pandoc.Inlines elem
-local function toImage(elem, renderOptions)
-  local elemType = latexType(elem)
-  local code = elem.text or ''
-  local doc = ''
+---@return pandoc.Image|pandoc.Inlines|pandoc.Para|nil
+local function toImage(elem, elemType, renderOptions)
+  local code, doc
   local success, result, img
+
+  -- get code, return nil if none
+  if elemType == 'TexImage' or elemType == 'TikzImage' then
+    code = getCodeFromFile(elem.src)
+    if not code then
+      message('ERROR', 'Image source file '..elem.src..' not found.')
+    end
+  else
+    code = elem.text
+  end
+  if not code then return nil end
 
   -- prepare LaTeX source document
   doc = buildTeXDoc(code, renderOptions, elemType)
@@ -1002,10 +1047,16 @@ local function toImage(elem, renderOptions)
   success, result = latexToImage(doc, renderOptions)
 
   -- prepare Image element
-  if success then 
-    img = createImageElemFrom(code, result, renderOptions, elemType)
-    if elemType == 'RawBlock' then
-      img = pandoc.Para(img)
+  if success then
+    if (elemType == 'TexImage' or elemType == 'TikzImage') then
+      elem.src = result
+      img = elem
+    elseif elemType == 'RawBlock' then
+      img = pandoc.Para(
+        createImageElemFrom(code, result, renderOptions, elemType)
+      )
+    else
+      img = createImageElemFrom(code, result, renderOptions, elemType)
     end
   else
     message('ERROR', result)
@@ -1056,8 +1107,10 @@ local function scanContainer(elem, renderOptions)
     local scan = function (elem) return scanContainer(elem, opts) end
     --- build imagifier from updated options
     local imagify = function(el) 
-      if latexType(el) then 
-        return toImage(el, opts)
+      local elemType = imagifyType(el)
+      if opts.force == true or outputIsLaTeX() == false
+        or (elemType == 'TexImage' or elemType == 'TikzImage') then
+        return elemType and toImage(el, elemType, opts) or nil
       end
     end
     --- apply recursion first, then imagifier
@@ -1067,7 +1120,8 @@ local function scanContainer(elem, renderOptions)
     }):walk({
       Math = imagify,
       RawInline = imagify,
-      RawBlock = imagify,  
+      RawBlock = imagify,
+      Image = imagify,
     })
 
   else
@@ -1089,7 +1143,7 @@ local function main(doc)
   local scope = filterOptions.scope
   local force = globalRenderOptions.force
 
-  if scope == 'none' or (outputIsLaTeX() and not force) then
+  if scope == 'none' then
       return nil
   end
 

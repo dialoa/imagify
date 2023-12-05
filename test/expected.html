@@ -60,6 +60,10 @@
     img {
       max-width: 100%;
     }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
     h1, h2, h3, h4, h5, h6 {
       margin-top: 1.4em;
     }
@@ -152,14 +156,18 @@
     div.columns{display: flex; gap: min(4vw, 1.5em);}
     div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-    ul.task-list{list-style: none;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
     ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
       width: 0.8em;
       margin: 0 0.8em 0.2em -1.6em;
       vertical-align: middle;
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
+  
   <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
   <![endif]-->
@@ -169,19 +177,19 @@
 <h1 class="title">Imagify Example</h1>
 </header>
 <p>Imagify the following span: <span class="imagify">the formula <img
-src="_imagify_files/834aba06fd119cd000555eac54ad1f6126400419.svg"
+src="_imagify_files/3011e0d44a5c66360354b082653da7f221feedca.svg"
 title="E = mc^2" style="vertical-align: baseline; "
 alt="Image based on the LaTeX code:E = mc^2" /></span>.</p>
 <div class="imagify">
 <p>For some inline formulas, such as <img
-src="_imagify_files/36b25e3fca1c4260547217f33ac61ad3b355d7c5.svg"
+src="_imagify_files/7eb2261a24aba8c1ddaa237015337cc7580b2651.svg"
 title="x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}"
 style="vertical-align: baseline; "
 alt="Image based on the LaTeX code:x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}" />,
 the default <code>baseline</code> vertical alignment is not ideal. You
 can adjust it manually, using a negative value to lower the image below
 the baseline: <span class="imagify" data-vertical-align="-.5em"><img
-src="_imagify_files/36b25e3fca1c4260547217f33ac61ad3b355d7c5.svg"
+src="_imagify_files/7eb2261a24aba8c1ddaa237015337cc7580b2651.svg"
 title="x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}"
 style="vertical-align: -.5em; "
 alt="Image based on the LaTeX code:x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}" /></span>.
@@ -194,13 +202,13 @@ placed the next bit within a dummy Div block.</p>
 <p>The display formula below is not explicitly marked to be imagified.
 However, it will be imagified in the filter’s <code>scope</code> option
 is set to <code>all</code>: <img
-src="_imagify_files/7312abb1b34a423140f8d5d76d8ac4bb66776191.svg"
+src="_imagify_files/e1b565e8de1297ae432164b862b7691baf7e3c88.svg"
 title="P = \frac{T}{V}" style="display:block; margin: .5em auto;"
 alt="Image based on the LaTeX code:P = \frac{T}{V}" /></p>
 <div class="highlightme" data-zoom="1">
 <p>This next formula is imagified with options provided for elements of
 a custom class, <code>highlightme</code>: <img
-src="_imagify_files/5e57052914c8be3062d7efe2237160c1e3c5bc11.svg"
+src="_imagify_files/b535f5dc47c421c8ddb6b780b8e5aa2419a79c6c.svg"
 title="P = \frac{T}{V}" style="border: 1px solid red;"
 alt="Image based on the LaTeX code:P = \frac{T}{V}" />. They display the
 formula as an inline instead of a block and add a red border. They also
@@ -213,7 +221,7 @@ package with the <code>tikz</code> option for the
 conversion to SVG, the required <code>dvisvgm</code> option is set
 too:</p>
 <p><img
-src="_imagify_files/c7539752ea4b02458bde623378b40c9a0d11141a.svg"
+src="_imagify_files/cc2a86b2d7eebb69b5cad0c348fdf4853e3a07e2.svg"
 title="\usetikzlibrary{intersections}
 \begin{tikzpicture}[scale=3,line cap=round,
 % Styles
@@ -250,6 +258,29 @@ important line/.style={very thick}]
 \end{tikzpicture}" style="display:block; margin: .5em auto;"
 alt="Image based on the LaTeX code:\usetikzlibrary{intersections} \begin{tikzpicture}[scale=3,line cap=round, % Styles axes/.style=, important line/.style={very thick}] % Colors \colorlet{anglecolor}{green!50!black} \colorlet{sincolor}{red} \colorlet{tancolor}{orange!80!black} \colorlet{coscolor}{blue} % The graphic \draw[help lines,step=0.5cm] (-1.4,-1.4) grid (1.4,1.4); \draw (0,0) circle [radius=1cm]; \begin{scope}[axes] \draw[-&gt;] (-1.5,0) -- (1.5,0) node[right] {$x$} coordinate(x axis); \draw[-&gt;] (0,-1.5) -- (0,1.5) node[above] {$y$} coordinate(y axis); \foreach \x/\xtext in {-1, -.5/-\frac{1}{2}, 1} \draw[xshift=\x cm] (0pt,1pt) -- (0pt,-1pt) node[below,fill=white] {$\xtext$}; \foreach \y/\ytext in {-1, -.5/-\frac{1}{2}, .5/\frac{1}{2}, 1} \draw[yshift=\y cm] (1pt,0pt) -- (-1pt,0pt) node[left,fill=white] {$\ytext$}; \end{scope} \filldraw[fill=green!20,draw=anglecolor] (0,0) -- (3mm,0pt) arc [start angle=0, end angle=30, radius=3mm]; \draw (15:2mm) node[anglecolor] {$\alpha$}; \draw[important line,sincolor] (30:1cm) -- node[left=1pt,fill=white] {$\sin \alpha$} (30:1cm |- x axis); \draw[important line,coscolor] (30:1cm |- x axis) -- node[below=2pt,fill=white] {$\cos \alpha$} (0,0); \path [name path=upward line] (1,0) -- (1,1); \path [name path=sloped line] (0,0) -- (30:1.5cm); \draw [name intersections={of=upward line and sloped line, by=t}] [very thick,orange] (1,0) -- node [right=1pt,fill=white] {$\displaystyle \tan \alpha \color{black}=\frac{{\color{red}\sin \alpha}}{\color{blue}\cos \alpha}$} (t); \draw (0,0) -- (t); \end{tikzpicture}" /></p>
 </div>
+<p>We can also use separate <code>.tex</code> and <code>.tikz</code>
+files as sources for images. The filter converts them to PDF (for
+LaTeX/PDF output) or SVG as required. That is useful to create
+cross-referencable figures with Pandoc-Crossref and Quarto.</p>
+<div class="imagify">
+<figure>
+<img src="_imagify_files/02fa595f5be18b666e011970bcea5effe0067a0f.svg"
+alt="Figure 1 is a separate tikz file" />
+<figcaption aria-hidden="true">Figure 1 is a separate tikz
+file</figcaption>
+</figure>
+<figure>
+<img src="_imagify_files/50ce09cc3cdb7f6fb53f3ac310bb87c1496828fe.svg"
+alt="Figure 2 is a separate tex file" />
+<figcaption aria-hidden="true">Figure 2 is a separate tex
+file</figcaption>
+</figure>
+</div>
+<p>Currently, these should not contain a LaTeX preamble or
+<code>\begin{document}</code>. There is no difference between
+<code>.tikz</code> and <code>.tex</code> sources here. A TikZ picture in
+a <code>.tikz</code> file should still have
+<code>\begin{tikzpicture}</code> or <code>\tikz</code> commands.</p>
 <div class="fitch">
 <p>We can also use LaTeX packages that are provided in the document’s
 folder, here <code>fitch.sty</code> (a package not available on

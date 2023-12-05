@@ -15,6 +15,13 @@ SOURCE_MODULES := $(SOURCE_FILES:$(SOURCE_DIR)/%.lua=%)
 SOURCE_MODULES := $(SOURCE_MODULES:main=)
 SOURCE_MAIN = main
 
+# Test files
+TEST_DIR := test
+TEST_FILES := $(TEST_DIR)/input.md \
+	$(wildcard $(TEST_DIR)/figure*.tikz) \
+	$(wildcard $(TEST_DIR)/figure*.tex) \
+	$(wildcard $(TEST_DIR)/test*.yaml) 
+	
 # Allow to use a different pandoc binary, e.g. when testing.
 PANDOC ?= pandoc
 # Allow to adjust the diff command if necessary
@@ -23,6 +30,8 @@ DIFF ?= diff
 SED := sed $(shell sed v </dev/null >/dev/null 2>&1 && echo " --posix") -E
 
 # Pandoc formats for test outputs
+# Use make generate FORMAT=pdf to try PDF, 
+# not included in the test as PDF files aren't identical on each run
 FORMAT ?= html
 
 # Directory containing the Quarto extension
@@ -55,6 +64,7 @@ help:
 #
 # Build
 # 
+# automatically triggered on `test`, `generate` or `run`
 
 ## Build the filter file from sources (requires luacc)
 # If SOURCE_DIR is not empty, combine source files with
@@ -94,7 +104,7 @@ endif
 # NB: not piping into DIFF. We need to set a --output values for
 # paths relative to output to be computed as with the generate target.
 .PHONY: test
-test: $(FILTER_FILE) test/input.md test/test.yaml
+test: $(FILTER_FILE) $(TEST_FILES)
 	@for ext in $(FORMAT) ; do \
 		$(PANDOC) --defaults test/test.yaml --to $$ext \
 			--output test/out.$$ext; \
@@ -107,7 +117,7 @@ test: $(FILTER_FILE) test/input.md test/test.yaml
 # would cause it to be regenerated on each run, making the test
 # pointless.
 .PHONY: generate
-generate: $(FILTER_FILE) test/input.md test/test.yaml test/test_meta.yaml
+generate: $(FILTER_FILE) $(TEST_FILES)
 	@for ext in $(FORMAT) ; do \
 		echo Creating test/expected.$$ext;\
 		$(PANDOC) --defaults test/test.yaml --to $$ext \
@@ -121,7 +131,7 @@ generate: $(FILTER_FILE) test/input.md test/test.yaml test/test_meta.yaml
 ## Generates expected output from the filter's source code (if configured)
 ifneq ($(SOURCE_MAIN), )
 .PHONY: run
-run: $(SOURCE_FILES) test/input.md test/test.yaml  test/test_meta.yaml
+run: $(SOURCE_FILES)  $(TEST_FILES)
 	@for ext in $(FORMAT) ; do \
 		$(PANDOC) test/input.md \
 		-L $(SOURCE_DIR)/$(SOURCE_MAIN).lua \
