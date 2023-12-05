@@ -18,11 +18,26 @@ Overview
 --------------------------------------------------------------------
 
 Imagify turns selected LaTeX elements into images in non-LaTeX/PDF
-output. It also allows you to use `.tex` or `.tikz` elements as
-image source files, which is useful to create cross-referenceable
-figures with [Pandoc-crossref][] or [Quarto][].
+output. This is useful for web output if you use MathJAX but it 
+doesn't handle all of your LaTeX code.
 
-By default, Imagify tries to match the document's LaTeX output settings 
+It also allows you to use `.tex` or `.tikz` elements as
+image source files, which is useful to create cross-referenceable
+figures with [Pandoc-crossref][] or [Quarto][]. Pandoc-crossref
+and Quarto have a sophisticated figure handling with captions
+and cross-references, but they require image elements, e.g.:
+
+``` markdown
+![Caption](figure.png){#fig-1}
+```
+
+To use this with a TikZ/LaTeX figure, you would need to turn 
+it into an image of suitable format first (PDF for PDF, SVG or PNG
+for other output formats). This filter allows you to simply
+use a `.tex`/`.tikz` file as source, and produce suitable image
+in various outputs. 
+
+Imagify also tries to match your document's LaTeX output settings 
 (fonts, LaTeX packages, etc.). Its rendering options are otherwise 
 extensively configurable, and different rendering options can 
 be used for different elements. It can embed its images within HTML 
