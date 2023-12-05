@@ -186,7 +186,7 @@ $$
 my fancy formula
 $$
 
-~~~
+~~~~
 
 When Imagify converts `figure1.tex` LaTeX crashes because 
 the `standalone` class doesn't accept paragraph elements 
