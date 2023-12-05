@@ -199,12 +199,13 @@ end
 --[[-- # Imagify - Pandoc / Quarto filter to convert selected 
   LaTeX elements into images.
 
-@author Julien Dutant <julien.dutant@kcl.ac.uk>
-@copyright 2021 Julien Dutant
+@author Julien Dutant <julien.dutant@philosophie.ch>
+@copyright 2021-2023 Philosophie.ch
 @license MIT - see LICENSE file for details.
-@release 0.1
+@release 0.2
 
-Pre-renders specified Math and Raw elements as images. 
+Converts some or all LaTeX code in a document into 
+images.
 
 @todo reader user templates from metadata
 
@@ -261,7 +262,7 @@ local globalRenderOptions = {
   block_style = 'display:block; margin: .5em auto;'
 }
 
----@alias fo_scope 'manual'|'all'|'none', # imagify scope
+---@alias fo_scope 'manual'|'all'|'images'|'none', # imagify scope
 ---@alias fo_lazy boolean, # do not regenerate existing image files
 ---@alias fo_no_html_embed boolean, # prohibit html embedding
 ---@alias fo_output_folder string, # path for outputs
@@ -545,7 +546,7 @@ end
 
 ---getFilterOptions: read render options
 ---returns a map:
----   scope: 'all'|'manual'|'none'|nil
+---   scope: fo_scope
 ---   libgs_path: string
 ---   output_folder: string
 ---@param opts table options map from meta.imagify
@@ -568,6 +569,7 @@ local function getFilterOptions(opts)
   result.scope = opts.scope and (
     opts.scope == 'all' and 'all'
     or (opts.scope == 'selected' or opts.scope == 'manual') and 'manual'
+    or opts.scope == 'images' and 'images'
     or opts.scope == 'none' and 'none'
   ) or nil
 
@@ -1144,18 +1146,34 @@ local function main(doc)
   local force = globalRenderOptions.force
 
   if scope == 'none' then
-      return nil
+    return nil
   end
 
   -- whole doc wrapped in a Div to use the recursive scanner
   local div = pandoc.Div(doc.blocks)
 
+  -- recursive scanning in modes other than 'images'
   -- if scope == 'all' we tag the whole doc as `imagify`
-  if scope == 'all' then 
-    div.classes:insert('imagify')
+  if scope ~= 'images' then 
+    
+    if scope == 'all' then
+      div.classes:insert('imagify')
+    end
+    
+    div = scanContainer(div, globalRenderOptions)
+
   end
 
-  div = scanContainer(div, globalRenderOptions)
+  -- imagify any leftover tikz / tex images
+  -- using global render options
+  div = div:walk({
+    Image = function (elem)
+      local elemType = imagifyType(elem)
+      if elemType then 
+        return toImage(elem, elemType, globalRenderOptions)
+      end
+    end,
+  }) 
 
   return div and pandoc.Pandoc(div.content, doc.meta)
     or nil

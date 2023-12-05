@@ -4,7 +4,7 @@ Imagify - Pandoc/Quarto filter to convert selected LaTeX into images
 [![GitHub build status][CI badge]][CI workflow]
 
 Lua filter to convert some or all LaTeX code in a document into 
-images. 
+images and to use `.tex`/`.tikz` files as image sources. 
 
 Copyright 2022-2023 [Philosophie.ch][Philoch]. Maintained by
 [Julien Dutant][JDutant].
@@ -20,7 +20,7 @@ Overview
 
 Imagify turns selected LaTeX elements into images in non-LaTeX/PDF
 output. It also allows you to use `.tex` or `.tikz` elements as
-image sources files, which is useful to create cross-referenceable
+image source files, which is useful to create cross-referenceable
 figures with [Pandoc-crossref][] or [Quarto][].
 
 By default, Imagify tries to match the document's LaTeX output settings 
@@ -89,7 +89,7 @@ output:
 Basic usage
 ------------------------------------------------------------------
 
-### Imagifying
+### Imagifying selected LaTeX elements
 
 LaTeX elements to be imagified should be placed in a Div block
 with class `imagify`. In markdown source:
@@ -120,21 +120,69 @@ And this raw LaTeX block:
 { \pline{B} }
 ```
 
-This image with a `.tikz` source file will be imagified
-too. In LaTeX/PDF output it will turned into an imported
-PDF image too.
+:::
+~~~~~
+
+LaTeX math and raw LaTeX elements in the Div are converted to images
+unless the output format is LaTeX/PDF. 
+
+If a LaTeX element is or contains a TikZ picture, the TikZ
+package is loaded. If you need a specific library, place
+a `\usetikzlibrary` command at the beginning of your picture
+code.
+
+
+### Using `.tex`/`.tikz` files as image sources
+
+The filter allows `.tex`/`.tikz` files to be used as image
+sources
+
+~~~~~ markdown
+![Figure: a TikZ image](figure1.tikz){#fig-1 .some-attributes}
+~~~~~
+
+The source file will be converted to an image in all output formats,
+e.g. PDF for LaTeX/PDF output, SVG for HTML. Attributes on the image
+are preserved. This is useful for cross-referencing with
+Pandoc-Crossref or Quarto. 
+
+Optionally, you can wrap image elements in an `imagify` Div. This
+allows you to specify rendering options for some image elements
+(see below on rendering options).
+
+~~~~~ markdown
+::: {.imagify zoom=2}
 
 ![Figure: a TikZ image](figure1.tikz){#fig-1 .some-attributes}
 
 :::
 ~~~~~
 
-1. LaTeX math and raw LaTeX elements in the Div are converted to images
-unless the output format is LaTeX/PDF. 
-1. Image elements with a `.tikz` or `.tex` source in the Div are 
-    converted to images in all output formats. Attributes on the image
-    are preserved. This is useful for cross-referencing with Pandoc-Crossref
-    or Quarto. 
+The source file should not include a LaTeX preamble nor
+`\begin{document}...\end{document}`. The two extensions
+are treated the same way: if the file contains `\tikz`
+or `\begin{tikzpicture}` then TikZ is loaded. 
+
+The source must work with LaTeX's `standalone` class,
+which imposes some restrictions. In particular, if 
+your source is a display formula, it should be 
+entered as an inline formula in the 'display' style like so:
+
+__source.md__
+:   ~~~~
+    ![Figure 1: my equation](figure.tex)
+    ~~~~
+
+__figure.tex__
+:   ~~~~
+    $\displaystyle
+    my fancy formula
+    $
+    ~~~~
+  
+Instead of the usual `$$ ... $$` or `\[ ... \]`.
+
+### Rendered images
 
 Images files are placed in
 an `_imagify` folder created in your current working directory. 
@@ -142,19 +190,14 @@ See the `test/input.md` file for an example.
 
 Images are generated using any Pandoc LaTeX output options specified
 in your document's metadata suited for a `standalone` class document, 
-such as `fontfamily`, `fontsize` etc. See the [Pandoc manual][PManTeX] 
-for details.
+such as `fontfamily`, `fontsize` etc. Below 
+[Pandoc's LaTeX options](#pandoc's-latex-options) is a list of 
+options preserved; see [Pandoc manual][PManTeX] 
+for what they do.
 
-If a LaTeX element is or contains a TikZ picture, the TikZ
-package is loaded. If you need a specific library, place
-a `\usetikzlibrary` command at the beginning of your picture
-code.
+You can customize options used in rendering, as detailed below.
 
-For Image elements with a `.tikz` or `.tex` source file,
-the source file should not include a LaTeX preamble nor
-`\begin{document}...\end{document}`. The two extensions
-are treated the same way: if the file contains `\tikz`
-or `\begin{tikzpicture}` then TikZ is loaded. 
+### Extra LaTeX packages and LaTeX debugging
 
 Custom LaTeX packages not included in standard LaTeX 
 distribution (e.g. `fitch.sty`) can be used, provided
@@ -162,50 +205,37 @@ you place them in the source file's folder or one of
 its subfolder, or specify an appropriate location
 via the `texinputs` option. 
 
-### Warning: standalone class restrictions
-
-LaTeX elements are imagified using [LaTeX's `standalone`
-class][Standalone], which imposes some unexpected restrictions. 
-If you're only imagifying inline (`$...$`) or display (`$$...$$`) 
-formulas weaved in your document, Imagify handles them
-for you. 
-
-However, if you imagify Raw LaTeX
-or from a separate `.tex` or `.tikz` file, your LaTeX
-code must be compatible with the standalone class. The most
-common error is to enter display formulas:
-
-~~~~
-source.md
-
-![Figure 1: my equation](figure.tex)
-
-figure.tex
-
-$$
-my fancy formula
-$$
-
-~~~~
-
-When Imagify converts `figure1.tex` LaTeX crashes because 
-the `standalone` class doesn't accept paragraph elements 
-like display formulas. What you need instead is an inline
-formula in 'display style':
-
-``` latex
-figure.tex
-
-$\displaystyle
-my fancy formula
-$
-```
+If a piece of LaTeX crashes, try debugging it 
+in a LaTeX document, first in the `article` class 
+then in the `standalone` class. Try also the 
+filter's `debug` option to inspect Imagify's
+LaTeX output. 
 
 ### Imagifying options
 
-Options are specified via `imagify` and `imagify-classes` 
-metadata variables. For instance, temporarily disable 
-Imagify with:
+There are two types of options: for the filter itself, and for
+imagifying. The former are specified in the document's metadata (YAML
+block at the beginning). The latter can vary from one imagified
+element to another and can be specified in three ways: as 
+global rendering options, as imagifying classes of Divs, on individual
+Divs. 
+
+Rendering options are applied in a cascading manner, from the 
+more general to the more specific, the latter overriding the former.
+Thus we apply in the following order:
+
+1. The document's Pandoc properties for LaTeX output, e.g. `fontsize`,
+2. Imagify's global rendering options
+3. For each Div, first the options associated with its custom imagifying
+   class, if any, then any options specified on the Div itself.
+4. And so on recursively if an imagify Div is contained within
+   another. 
+
+#### Global options
+
+Options are specified via `imagify` and `imagify-classes` metadata
+variables (in the document's YAML block). For instance, temporarily
+disable Imagify with:
 
 ``` yaml
 imagify: none
@@ -217,12 +247,15 @@ Set Imagify to convert all LaTeX in a document with:
 imagify: all
 ```
 
-This probably not a good idea if your document contains
-many LaTeX elements that could be rendered by MathJAX
-or equivalent. 
+This probably not a good idea if your document contains many LaTeX
+elements that could be rendered by MathJAX or equivalent. The default
+is `manual`, which imagifies only (a) image elements with a `.tex` or
+`.tikz` source files and (b) LaTeX contained in `imagify` Divs. You
+can also use `images`, which only converts images elements with a
+`.tex` or `.tikz` source.
 
-Set the images to be embedded in the HTML output file,
-rather than provided as separate files, with:
+Set the images to be embedded in the HTML output file, rather than
+provided as separate files, with:
 
 ``` yaml
 imagify:
@@ -248,10 +281,11 @@ imagify:
   debug: true
 ```
 
-The `.tex` files are placed in the output folder 
-(by default `_imagify` in your working directory). 
-You can try to compile them yourself and see what 
-changes or packages are needed.
+This places Imagify's intermediate LaTeX files in our output folder
+(by default `_imagify` in your working directory). Try to compile them
+yourself and see what changes or packages are needed.
+
+#### Using classes
 
 Create custom imagifying classes with their own
 rendering options with the `imagify-class` variable:
@@ -266,10 +300,26 @@ imagify-classes:
     zoom: 1
 ```
 
-*Note*. If a Div has multiple imagify-classes, only
-the first encountered is used. This may not be the 
-first one you specified. If a Div has the class `imagify`
-and a specific imagify-class, the latter is used.
+Use them in your markdown as follows:
+
+~~~~ markdown
+::: mybigimage
+
+The display formula below is rendered with the `mybigimage`
+class rendering options:
+$$my formula$$
+
+:::
+~~~~
+
+Imagify-class rendering options are also applied to any
+image elements with `.tex`/`tikz` sources in the Div.
+
+If a Div has both the class `imagify` and a specific imagify-class,
+the latter is used.If a Div has multiple imagify-classes, only one
+will be use, and you can't predict which: avoid this. 
+
+#### Using Div attributes
 
 You can further specify rendering options on a Div itself:
 
@@ -281,15 +331,10 @@ You can further specify rendering options on a Div itself:
 :::
 ~~~~~
 
-Rendering options are applied in a cascading manner. 
-To determine which options apply to given LaTeX element, 
-we apply in that order:
-
-- the Document's LaTeX options (`fontsize` etc)
-- Imagify options
-- For each imagify-class Div containing the element, starting
-  with the widest-scope one, we apply its class options first, 
-  then any option locally specified on the Div itself.  
+The Div must have the `imagify` class or one of your
+custom imagify-classes. If it has a custom imagify-classes
+the class options are applied, but overridden by any
+attributes you specify. 
 
 Options reference
 ------------------------------------------------------------------
