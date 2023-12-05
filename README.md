@@ -180,7 +180,7 @@ source.md
 
 ![Figure 1: my equation](figure.tex)
 
-figure1.tex
+figure.tex
 
 $$
 my fancy formula
@@ -194,7 +194,7 @@ like display formulas. What you need instead is an inline
 formula in 'display style':
 
 ``` latex
-figure1.tex
+figure.tex
 
 $\displaystyle
 my fancy formula
