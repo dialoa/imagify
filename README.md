@@ -31,11 +31,10 @@ and cross-references, but they require image elements, e.g.:
 ![Caption](figure.png){#fig-1}
 ```
 
-To use this with a TikZ/LaTeX figure, you would need to turn 
-it into an image of suitable format first (PDF for PDF, SVG or PNG
-for other output formats). This filter allows you to simply
-use a `.tex`/`.tikz` file as source, and produce suitable image
-in various outputs. 
+To use this with a TikZ/LaTeX figure, you would need to convert it to
+an image first, and ideally PDF for PDF, SVG or PNG for other output
+formats. This filter allows you to use a `.tex`/`.tikz` file as
+source.
 
 Imagify also tries to match your document's LaTeX output settings 
 (fonts, LaTeX packages, etc.). Its rendering options are otherwise 
