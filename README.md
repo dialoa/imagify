@@ -45,6 +45,8 @@ Installation
 
 ### Plain pandoc
 
+Get `imagify.lua` from the [releases page](releases).
+
 Pass the filter to Pandoc via the `--lua-filter` (or `-L`) command
 line option.
 
