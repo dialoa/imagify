@@ -45,7 +45,8 @@ Installation
 
 ### Plain pandoc
 
-Get `imagify.lua` from the [releases page](releases).
+Get `imagify.lua` from the Releases page and save it somewhere
+Pandoc can find (see [Pandoc][] for details).
 
 Pass the filter to Pandoc via the `--lua-filter` (or `-L`) command
 line option.
@@ -171,7 +172,7 @@ or from a separate `.tex` or `.tikz` file, your LaTeX
 code must be compatible with the standalone class. The most
 common error is to enter display formulas:
 
-```
+~~~~
 source.md
 
 ![Figure 1: my equation](figure.tex)
@@ -182,7 +183,8 @@ $$
 my fancy formula
 $$
 
-```
+~~~
+
 When Imagify converts `figure1.tex` LaTeX crashes because 
 the `standalone` class doesn't accept paragraph elements 
 like display formulas. What you need instead is an inline
