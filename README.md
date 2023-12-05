@@ -24,7 +24,7 @@ image sources files, which is useful to create cross-referenceable
 figures with [Pandoc-crossref][] or [Quarto][].
 
 By default, Imagify tries to match the document's LaTeX output settings 
-(fonts, LaTeX packages, etc.). Its rendering options otherwise 
+(fonts, LaTeX packages, etc.). Its rendering options are otherwise 
 extensively configurable, and different rendering options can 
 be used for different elements. It can embed its images within HTML 
 output or provide them as separate image files. 
