@@ -1,12 +1,13 @@
 --[[-- # Imagify - Pandoc / Quarto filter to convert selected 
   LaTeX elements into images.
 
-@author Julien Dutant <julien.dutant@kcl.ac.uk>
-@copyright 2021 Julien Dutant
+@author Julien Dutant <julien.dutant@philosophie.ch>
+@copyright 2021-2023 Philosophie.ch
 @license MIT - see LICENSE file for details.
-@release 0.1
+@release 0.2
 
-Pre-renders specified Math and Raw elements as images. 
+Converts some or all LaTeX code in a document into 
+images.
 
 @todo reader user templates from metadata
 
