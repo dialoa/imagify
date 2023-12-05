@@ -13,18 +13,25 @@ Overview
 --------------------------------------------------------------------
 
 Imagify turns selected LaTeX elements into images in non-LaTeX/PDF
-output. It tries to match the document's LaTeX output settings 
-(fonts, LaTeX packages, etc.) by default. Its rendering options
-are extensively configurable, and different rendering options can 
-be used for different elements. It can embed its images within HTML 
-files or provide them as separate image files. 
+output. It also allows you to use `.tex` or `.tikz` elements as
+image sources files, which is useful to create cross-referenceable
+figures with [Pandoc-crossref][] or [Quarto][].
 
-Requirements: Pandoc or Quarto, a LaTeX installation 
-with the `latexmk` and `dvisvgm` tools. 
+By default, Imagify tries to match the document's LaTeX output settings 
+(fonts, LaTeX packages, etc.). Its rendering options otherwise 
+extensively configurable, and different rendering options can 
+be used for different elements. It can embed its images within HTML 
+output or provide them as separate image files. 
+
+Requirements: [Pandoc][] or [Quarto][], a LaTeX installation 
+(with `dvisvgm` and, recommended, `latexmk`, which are included
+in common LaTeX distributions).
 
 Limitations:
 
-* So far designed with HTML output in mind, LaTeX to SVG conversion. 
+* So far designed with HTML output in mind, LaTeX to SVG conversion,
+  and LaTeX/PDF outputs with separate `.tikz` or `.tex` files as
+  image sources. 
   In other output formats, the images will be inserted or linked as PDFs
   and may display in wrong sizes or not at all. 
 * Embedding within HTML output isn't compatible with Pandoc's 
@@ -129,8 +136,6 @@ in your document's metadata suited for a `standalone` class document,
 such as `fontfamily`, `fontsize` etc. See the [Pandoc manual][PManTeX] 
 for details.
 
-[PManTeX]: https://pandoc.org/MANUAL.html#variables-for-latex
-
 If a LaTeX element is or contains a TikZ picture, the TikZ
 package is loaded. If you need a specific library, place
 a `\usetikzlibrary` command at the beginning of your picture
@@ -155,8 +160,6 @@ class][Standalone], which imposes some unexpected restrictions.
 If you're only imagifying inline (`$...$`) or display (`$$...$$`) 
 formulas weaved in your document, Imagify handles them
 for you. 
-
-[Standalone]: https://ctan.org/pkg/standalone
 
 However, if you imagify Raw LaTeX
 or from a separate `.tex` or `.tikz` file, your LaTeX
@@ -339,8 +342,6 @@ Specified within the `imagify` key.
   This is not the Ghostscript program, but its library. It's
   passed to `dvisvgm`. See [DvisvgmMan] for details.
 
-[DvisvgmMan]: https://dvisvgm.de/Manpage/
-
 ### Rendering options
 
 These can differ from one imagified element to another.
@@ -461,3 +462,10 @@ These are passed to the default Pandoc template
 that is used to create. The document class is set
 to `standalone`.
 
+
+[Pandoc]: https://www.pandoc.org
+[Pandoc-crossref]: https://github.com/lierdakil/pandoc-crossref
+[Quarto]: https://quarto.org/
+[DvisvgmMan]: https://dvisvgm.de/Manpage/
+[Standalone]: https://ctan.org/pkg/standalone
+[PManTeX]: https://pandoc.org/MANUAL.html#variables-for-latex
