@@ -180,23 +180,19 @@
 </header>
 <p>Imagify the following span: <span class="imagify">the formula <img
 src="/Users/julien/GitHub/imagify/_imagify_files/91e2dfd01db343f1441a474edd794ba084f1eeff.svg"
-title="E = mc^2" style="vertical-align: baseline; "
-alt="Image based on the LaTeX code:E = mc^2" /></span>.</p>
+title="E = mc^2" style="vertical-align: baseline; " /></span>.</p>
 <div class="imagify">
 <p>For some inline formulas, such as <img
 src="/Users/julien/GitHub/imagify/_imagify_files/efdef70511006e9c768b4e426005a4e4e44fc11a.svg"
 title="x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}"
-style="vertical-align: baseline; "
-alt="Image based on the LaTeX code:x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}" />,
-the default <code>baseline</code> vertical alignment is not ideal. You
-can adjust it manually, using a negative value to lower the image below
-the baseline: <span class="imagify" data-vertical-align="-.5em"><img
+style="vertical-align: baseline; " />, the default <code>baseline</code>
+vertical alignment is not ideal. You can adjust it manually, using a
+negative value to lower the image below the baseline: <span
+class="imagify" data-vertical-align="-.5em"><img
 src="/Users/julien/GitHub/imagify/_imagify_files/efdef70511006e9c768b4e426005a4e4e44fc11a.svg"
 title="x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}"
-style="vertical-align: -.5em; "
-alt="Image based on the LaTeX code:x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}" /></span>.
-In this case, I’ve specified a <code>-0.5em</code> value, which is about
-half a baseline down.</p>
+style="vertical-align: -.5em; " /></span>. In this case, I’ve specified
+a <code>-0.5em</code> value, which is about half a baseline down.</p>
 </div>
 <p>To check that the filter processes elements of arbitrary depth, we’ve
 placed the next bit within a dummy Div block.</p>
@@ -205,17 +201,15 @@ placed the next bit within a dummy Div block.</p>
 However, it will be imagified in the filter’s <code>scope</code> option
 is set to <code>all</code>: <img
 src="/Users/julien/GitHub/imagify/_imagify_files/256555451568c56245dcd5561d969b842210d9fc.svg"
-title="P = \frac{T}{V}" style="display:block; margin: .5em auto;"
-alt="Image based on the LaTeX code:P = \frac{T}{V}" /></p>
+title="P = \frac{T}{V}" style="display:block; margin: .5em auto;" /></p>
 <div class="highlightme" data-zoom="1">
 <p>This next formula is imagified with options provided for elements of
 a custom class, <code>highlightme</code>: <img
 src="/Users/julien/GitHub/imagify/_imagify_files/3a5f3af70938265c12aa0a87ca10cc63019e502f.svg"
-title="P = \frac{T}{V}" style="border: 1px solid red;"
-alt="Image based on the LaTeX code:P = \frac{T}{V}" />. They display the
-formula as an inline instead of a block and add a red border. They also
-specify a large zoom (4) but we’ve overridden it and locally specified a
-zoom of 1.</p>
+title="P = \frac{T}{V}" style="border: 1px solid red;" />. They display
+the formula as an inline instead of a block and add a red border. They
+also specify a large zoom (4) but we’ve overridden it and locally
+specified a zoom of 1.</p>
 </div>
 <p>The filter automatically recognizes TikZ pictures and loads the TikZ
 package with the <code>tikz</code> option for the
@@ -257,8 +251,7 @@ important line/.style={very thick}]
 
 \draw [name intersections={of=upward line and sloped line, by=t}] [very thick,orange] (1,0) -- node [right=1pt,fill=white] {$\displaystyle \tan \alpha \color{black}=\frac{{\color{red}\sin \alpha}}{\color{blue}\cos \alpha}$} (t);
 \draw (0,0) -- (t);
-\end{tikzpicture}" style="display:block; margin: .5em auto;"
-alt="Image based on the LaTeX code:\usetikzlibrary{intersections} \begin{tikzpicture}[scale=3,line cap=round, % Styles axes/.style=, important line/.style={very thick}] % Colors \colorlet{anglecolor}{green!50!black} \colorlet{sincolor}{red} \colorlet{tancolor}{orange!80!black} \colorlet{coscolor}{blue} % The graphic \draw[help lines,step=0.5cm] (-1.4,-1.4) grid (1.4,1.4); \draw (0,0) circle [radius=1cm]; \begin{scope}[axes] \draw[-&gt;] (-1.5,0) -- (1.5,0) node[right] {$x$} coordinate(x axis); \draw[-&gt;] (0,-1.5) -- (0,1.5) node[above] {$y$} coordinate(y axis); \foreach \x/\xtext in {-1, -.5/-\frac{1}{2}, 1} \draw[xshift=\x cm] (0pt,1pt) -- (0pt,-1pt) node[below,fill=white] {$\xtext$}; \foreach \y/\ytext in {-1, -.5/-\frac{1}{2}, .5/\frac{1}{2}, 1} \draw[yshift=\y cm] (1pt,0pt) -- (-1pt,0pt) node[left,fill=white] {$\ytext$}; \end{scope} \filldraw[fill=green!20,draw=anglecolor] (0,0) -- (3mm,0pt) arc [start angle=0, end angle=30, radius=3mm]; \draw (15:2mm) node[anglecolor] {$\alpha$}; \draw[important line,sincolor] (30:1cm) -- node[left=1pt,fill=white] {$\sin \alpha$} (30:1cm |- x axis); \draw[important line,coscolor] (30:1cm |- x axis) -- node[below=2pt,fill=white] {$\cos \alpha$} (0,0); \path [name path=upward line] (1,0) -- (1,1); \path [name path=sloped line] (0,0) -- (30:1.5cm); \draw [name intersections={of=upward line and sloped line, by=t}] [very thick,orange] (1,0) -- node [right=1pt,fill=white] {$\displaystyle \tan \alpha \color{black}=\frac{{\color{red}\sin \alpha}}{\color{blue}\cos \alpha}$} (t); \draw (0,0) -- (t); \end{tikzpicture}" /></p>
+\end{tikzpicture}" style="display:block; margin: .5em auto;" /></p>
 </div>
 <p>We can also use separate <code>.tex</code> and <code>.tikz</code>
 files as sources for images. The filter converts them to PDF (for
@@ -300,8 +293,7 @@ title="\begin{nd}
   \have[~] {5} {D}
   \close
   \have[~] {6} {C \lor D}
-\end{nd}" style="display:block; margin: .5em auto;"
-alt="Image based on the LaTeX code:\begin{nd} \hypo[~] {1} {A \lor B} \open \hypo[~] {2} {A} \have[~] {3} {C} \close \open \hypo[~] {4} {B} \have[~] {5} {D} \close \have[~] {6} {C \lor D} \end{nd}" /></p>
+\end{nd}" style="display:block; margin: .5em auto;" /></p>
 </div>
 </body>
 </html>

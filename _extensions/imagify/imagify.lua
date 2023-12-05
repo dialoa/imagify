@@ -1003,7 +1003,7 @@ end
 ---@return pandoc.Image img
 local function createImageElemFrom(text, src, renderOptions, elemType)
   local title = text or ''
-  local caption = 'Image based on the LaTeX code:' .. title
+  local caption = '' -- for future implementation (Raw elems attribute?)
   local block = elemType == 'DisplayMath' or elemType == 'RawBlock'
   local style = ''
   local block_style = renderOptions.block_style
