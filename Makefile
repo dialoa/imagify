@@ -220,6 +220,7 @@ $(QUARTO_EXT_DIR)/$(FILTER_FILE): $(FILTER_FILE) $(QUARTO_EXT_DIR)
 #
 
 ## Sets a new release (uses VERSION macro if defined)
+## Usage make release VERSION=x.y.z
 .PHONY: release
 release: quarto-extension generate
 	git commit -am "Release $(FILTER_NAME) $(VERSION)"
