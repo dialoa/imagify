@@ -36,7 +36,7 @@ jobs:
             PANDOC="docker run --rm --volume $(pwd):/data \
               --user $(id -u):$(id -g) custom-pandoc-latex"
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
           path: '_site'
       - name: Deploy to GitHub Pages
