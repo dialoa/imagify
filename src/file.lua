@@ -56,9 +56,11 @@ end
 ---writeToFile: write string to file.
 ---@param contents string file contents
 ---@param filepath string file path
+---@param mode string 'b' for binary, any other value text mode
 ---@return nil | string status error message
-function writeToFile(contents, filepath)
-  local f = io.open(filepath, 'w')
+function writeToFile(contents, filepath, mode)
+  local mode = mode == 'b' and 'wb' or 'w'
+  local f = io.open(filepath, mode)
 	if f then 
 	  f:write(contents)
 	  f:close()
@@ -67,17 +69,32 @@ function writeToFile(contents, filepath)
   end
 end
 
----readFile: read file as string.
+---readFile: read file as string (default) or binary.
 ---@param filepath string file path
+---@param mode string 'b' for binary, any other value text mode
 ---@return string contents or empty string if failure
-function readFile(filepath)
+function readFile(filepath, mode)
+  local mode = mode == 'b' and 'rb' or 'r'
 	local contents
-	local f = io.open(filepath, 'r')
+	local f = io.open(filepath, mode)
 	if f then 
 		contents = f:read('a')
 		f:close()
 	end
 	return contents or ''
+end
+
+---copyFile: copy file from source to destination
+---Lua's os.rename doesn't work across volumes. This is a 
+---problem when Pandoc is run within a docker container:
+---the temp files are in the container, the output typically
+---in a shared volume mounted separately.
+---We use copyFile to avoid this issue.
+---@param source string file path
+---@param destination string file path
+function copyFile(source, destination, mode)
+  local mode = mode == 'b' and 'b' or ''
+  writeToFile(readFile(source, mode), destination, mode)
 end
 
 -- stripExtension: strip filepath of the filename's extension

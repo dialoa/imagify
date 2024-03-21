@@ -783,7 +783,10 @@ local function latexToImage(source, renderOptions)
 
           else
 
-            os.rename(result, fileAbs)
+            --- File copy 
+            --- not os.rename, which doesn't work across volumes
+            --- binary in case the output is PDF
+            copyFile(result, fileAbs, 'b')
             result = fileRelativeToJob
 
           end
