@@ -904,7 +904,7 @@ local function latexToImage(source, renderOptions)
     or filterOptions.extensionForOutput.default
   local lazy = filterOptions.lazy
   local embed = renderOptions.embed
-    and ext == 'svg' and FORMAT:match('html') and true 
+    and ext == 'svg' and (FORMAT:match('html') or FORMAT:match('revealjs')) and true 
     or false
   local pdf_engine = renderOptions.pdf_engine or 'latex'
   local latex_out_format = ext == 'svg' and 'dvi' or 'pdf'
