@@ -83,8 +83,9 @@ CI Tests
 CI tests run on the
 [pandoc/latex][https://hub.docker.com/r/pandoc/latex] Docker image.
 The [Dockerfile](.tools/Dockerfile) installs two LaTeX packages not
-included in that image and needs to point out the the same version
-of TeXLive. 
+included from the current TeXLive repository at
+[https://mirror.ctan.org/systems/texlive/tlnet](CTAN). If the pandoc/latex Docker
+image is not yet updated to the latest TeXLive version, the Dockerfile should point to a suitable TexLive repository archive.
 
 Issues and contributing
 ------------------------------------------------------------------
