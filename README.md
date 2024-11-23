@@ -77,6 +77,15 @@ Installation and usage
 
 See the [manual][ImagifyManual].
 
+CI Tests
+--------
+
+CI tests run on the
+[pandoc/latex][https://hub.docker.com/r/pandoc/latex] Docker image.
+The [Dockerfile](.tools/Dockerfile) installs two LaTeX packages not
+included in that image and needs to point out the the same version
+of TeXLive. 
+
 Issues and contributing
 ------------------------------------------------------------------
 
