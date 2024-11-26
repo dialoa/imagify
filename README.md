@@ -6,8 +6,8 @@ Imagify - Pandoc/Quarto filter to convert selected LaTeX into images
 [CI badge]: https://img.shields.io/github/actions/workflow/status/dialoa/imagify/ci.yaml?branch=main
 [CI workflow]: https://github.com/dialoa/imagify/actions/workflows/ci.yaml
 
-Lua filter to convert some or all LaTeX code in a document into 
-images and to use `.tex`/`.tikz` files as image sources. 
+Lua filter to convert some or all LaTeX and TikZ elements in a document into 
+images. Also enables using `.tex`/`.tikz` files as image sources. 
 
 Copyright 2021-2023 [Philosophie.ch][Philoch] under MIT License, see
 LICENSE file for details.
