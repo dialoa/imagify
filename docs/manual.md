@@ -107,6 +107,9 @@ filters:
 ---
 ```
 
+See [Quarto's Extensions guide][QuartoExtManagement] for more
+details updating and version-controlling filters.
+
 ### R Markdown
 
 Use `pandoc_args` to invoke the filter. See the [R Markdown
@@ -554,6 +557,7 @@ create. The document class is set to `standalone`.
 [Pandoc]: https://www.pandoc.org
 [Pandoc-crossref]: https://github.com/lierdakil/pandoc-crossref
 [Quarto]: https://quarto.org/
+[QuartoExtManagement]: https://quarto.org/docs/extensions/managing.html
 [DvisvgmMan]: https://dvisvgm.de/Manpage/
 [DvisvgmCTAN]: https://ctan.org/pkg/dvisvgm
 [Standalone]: https://ctan.org/pkg/standalone
