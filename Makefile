@@ -175,7 +175,7 @@ _site/style.css:
 	@mkdir -p _site
 	curl \
 	    --output $@ \
-	    'https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/light.css'
+	    'https://cdn.jsdelivr.net/npm/water.css@2/out/water.min.css'
 
 _site/output.html: $(FILTER_FILE) $(TEST_SRC) $(DOCS_DEFAULTS)
 	@mkdir -p _site
