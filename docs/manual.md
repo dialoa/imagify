@@ -75,9 +75,11 @@ Installation
 
 ### Pre-requisites
 
-In addition to Pandoc/Quarto, the filter needs a LaTeX installation with the package `dvisvgm` installed. 
+In addition to Pandoc/Quarto, the filter needs a LaTeX
+installation with the package `dvisvgm` installed. 
 
-Quarto ships with a small LaTeX installation (tinytex), but the filter cannot use it.
+Quarto ships with a small LaTeX installation (tinytex), but the
+filter cannot use it.
 
 ### Plain pandoc
 
@@ -174,10 +176,10 @@ sources
 ![Figure: a TikZ image](figure1.tikz){#fig-1 .some-attributes}
 ~~~~~
 
-The source file will be converted to an image in all output formats,
-e.g. PDF for LaTeX/PDF output, SVG for HTML. Attributes on the image
-are preserved. This is useful for cross-referencing with
-Pandoc-Crossref or Quarto. 
+The source file will be converted to an image in all output
+formats, e.g. PDF for LaTeX/PDF output, SVG for HTML. Attributes
+on the image are preserved. This is useful for cross-referencing
+with Pandoc-Crossref or Quarto. 
 
 Optionally, you can wrap image elements in an `imagify` Div. This
 allows you to specify rendering options for some image elements
@@ -221,12 +223,11 @@ Images files are placed in
 an `_imagify` folder created in your current working directory. 
 See the `test/input.md` file for an example. 
 
-Images are generated using any Pandoc LaTeX output options specified
-in your document's metadata suited for a `standalone` class document, 
-such as `fontfamily`, `fontsize` etc. Below 
-[Pandoc's LaTeX options](#pandoc's-latex-options) is a list of 
-options preserved; see [Pandoc manual][PManTeX] 
-for what they do.
+Images are generated using any Pandoc LaTeX output options
+specified in your document's metadata suited for a `standalone`
+class document, such as `fontfamily`, `fontsize` etc. Below
+[Pandoc's LaTeX options](#pandoc's-latex-options) is a list of
+options preserved; see [Pandoc manual][PManTeX] for what they do.
 
 You can customize options used in rendering, as detailed below.
 
@@ -247,28 +248,30 @@ LaTeX output.
 ### Imagifying options
 
 There are two types of options: for the filter itself, and for
-imagifying. The former are specified in the document's metadata (YAML
-block at the beginning). The latter can vary from one imagified
-element to another and can be specified in three ways: as 
-global rendering options, as imagifying classes of Divs, on individual
-Divs. 
+imagifying. The former are specified in the document's metadata
+(YAML block at the beginning). The latter can vary from one
+imagified element to another and can be specified in three ways:
+as global rendering options, as imagifying classes of Divs, on
+individual Divs. 
 
-Rendering options are applied in a cascading manner, from the 
-more general to the more specific, the latter overriding the former.
+Rendering options are applied in a cascading manner, from the more
+general to the more specific, the latter overriding the former.
 Thus we apply in the following order:
 
-1. The document's Pandoc properties for LaTeX output, e.g. `fontsize`,
+1. The document's Pandoc properties for LaTeX output, e.g.
+   `fontsize`,
 2. Imagify's global rendering options
-3. For each Div, first the options associated with its custom imagifying
-   class, if any, then any options specified on the Div itself.
+3. For each Div, first the options associated with its custom
+   imagifying class, if any, then any options specified on the Div
+   itself.
 4. And so on recursively if an imagify Div is contained within
    another. 
 
 #### Global options
 
 Options are specified via `imagify` and `imagify-classes` metadata
-variables (in the document's YAML block). For instance, temporarily
-disable Imagify with:
+variables (in the document's YAML block). For instance,
+temporarily disable Imagify with:
 
 ``` yaml
 imagify: none
@@ -281,11 +284,11 @@ imagify: all
 ```
 
 This probably not a good idea if your document contains many LaTeX
-elements that could be rendered by MathJAX or equivalent. The default
-is `manual`, which imagifies only (a) image elements with a `.tex` or
-`.tikz` source files and (b) LaTeX contained in `imagify` Divs. You
-can also use `images`, which only converts images elements with a
-`.tex` or `.tikz` source.
+elements that could be rendered by MathJAX or equivalent. The
+default is `manual`, which imagifies only (a) image elements with
+a `.tex` or `.tikz` source files and (b) LaTeX contained in
+`imagify` Divs. You can also use `images`, which only converts
+images elements with a `.tex` or `.tikz` source.
 
 Set the images to be embedded in the HTML output file, rather than
 provided as separate files, with:
@@ -314,9 +317,9 @@ imagify:
   debug: true
 ```
 
-This places Imagify's intermediate LaTeX files in our output folder
-(by default `_imagify` in your working directory). Try to compile them
-yourself and see what changes or packages are needed.
+This places Imagify's intermediate LaTeX files in our output
+folder (by default `_imagify` in your working directory). Try to
+compile them yourself and see what changes or packages are needed.
 
 #### Using classes
 
@@ -348,9 +351,10 @@ $$my formula$$
 Imagify-class rendering options are also applied to any
 image elements with `.tex`/`tikz` sources in the Div.
 
-If a Div has both the class `imagify` and a specific imagify-class,
-the latter is used.If a Div has multiple imagify-classes, only one
-will be use, and you can't predict which: avoid this. 
+If a Div has both the class `imagify` and a specific
+imagify-class, the latter is used.If a Div has multiple
+imagify-classes, only one will be use, and you can't predict
+which: avoid this. 
 
 #### Using Div attributes
 
@@ -364,18 +368,17 @@ You can further specify rendering options on a Div itself:
 :::
 ~~~~~
 
-The Div must have the `imagify` class or one of your
-custom imagify-classes. If it has a custom imagify-classes
-the class options are applied, but overridden by any
-attributes you specify. 
+The Div must have the `imagify` class or one of your custom
+imagify-classes. If it has a custom imagify-classes the class
+options are applied, but overridden by any attributes you specify. 
 
 Options reference
 ------------------------------------------------------------------
 
-Options are provided in the document's metadata. These are provided
-either in a YAML block in markdown source, or as a separate 
-YAML file loaded with the pandoc option `--metadata-file`. Here is
-an example:
+Options are provided in the document's metadata. These are
+provided either in a YAML block in markdown source, or as a
+separate YAML file loaded with the pandoc option
+`--metadata-file`. Here is an example:
 
 ~~~~~ yaml
 fontsize: 12pt
@@ -403,9 +406,9 @@ imagify-classes:
 
 ### `imagify` and `imagify-classes`
 
-`imagify`
-: string or map. If string, assumed to be a `scope` option.
-  If map, filter options and global rendering options.
+`imagify` 
+: string or map. If string, assumed to be a `scope`
+  option. If map, filter options and global rendering options.
 
 `imagify-class`
 : map of class-name: map of rendering options.
@@ -461,11 +464,6 @@ as attributes of an imagify class Div elements.
 : string, DVI/PDF to SVG converter. Only `dvisvgm` available 
   for the moment.
 
-<!-- not implemented yet
-`template`
-: string, Pandoc template for 
--->
-
 #### SVG image
 
 `zoom`
@@ -474,32 +472,34 @@ as attributes of an imagify class Div elements.
 
 #### HTML specific
 
-`embed`
-: boolean. In HTML output, embed the images within the file itself
-  using [data URLs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URLs). Default: false.
+`embed` 
+: boolean. In HTML output, embed the images within the
+  file itself using [data
+  URLs](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URLs).
+  Default: false.
 
 `vertical-align`
-: string, CSS vertical align property for the generated image elements. 
-  See [CSS reference](https://developer.mozilla.org/en-US/docs/Web/CSS/vertical-align) for details. Defaults to 
-  `baseline`.
+: string, CSS vertical align property for the generated image 
+  elements. See [CSS
+  reference](https://developer.mozilla.org/en-US/docs/Web/CSS/vertical-align)
+  for details. Defaults to `baseline`.
 
 `block-style`
-: string, CSS style applied to images generated from Display Math elements
-  and LaTeX RawBlock elements. Defaults to 
+: string, CSS style applied to images generated from Display Math 
+  elements and LaTeX RawBlock elements. Defaults to 
   `display:block; margin: .5em auto;`.
 
 #### header-includes
 
-Specified at the metadata root, within the `imagify`
-key, within a key of the `imagify-class` map, or on
-as attributes of an imagify class Div elements.
+Specified at the metadata root, within the `imagify` key, within a
+key of the `imagify-class` map, or on as attributes of an imagify
+class Div elements.
 
-As the document `header-includes` is often used to include 
-LaTeX packages, the filter's default behaviour is to
-picks it up and insert it in the `.tex` files used to
-generate images. You can override that by specifying
-a custom or empty `header-includes` in the imagify 
-key:
+As the document `header-includes` is often used to include LaTeX
+packages, the filter's default behaviour is to picks it up and
+insert it in the `.tex` files used to generate images. You can
+override that by specifying a custom or empty `header-includes` in
+the imagify key:
 
 ``` yaml
 header-includes: |
@@ -518,14 +518,14 @@ imagify:
   header-includes: 
 ```
 
-Different header-includes can be specified for each
-imagify class or even on a Div attributes.
+Different header-includes can be specified for each imagify class
+or even on a Div attributes.
 
 #### Pandoc's LaTeX options
 
-Specified at the metadata root, within the `imagify`
-key, within a key of the `imagify-class` map, or on
-as attributes of an imagify class Div elements.
+Specified at the metadata root, within the `imagify` key, within a
+key of the `imagify-class` map, or on as attributes of an imagify
+class Div elements.
 
 The following Pandoc LaTeX output options are read: 
 
@@ -546,9 +546,8 @@ The following Pandoc LaTeX output options are read:
 
 See [Pandoc manual][PManTeX] for details. 
 
-These are passed to the default Pandoc template 
-that is used to create. The document class is set
-to `standalone`.
+These are passed to the default Pandoc template that is used to
+create. The document class is set to `standalone`.
 
 [Philoch]: https://philosophie.ch
 [JDutant]: https://github.com/jdutant
