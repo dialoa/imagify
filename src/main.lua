@@ -696,6 +696,7 @@ local function latexToImage(source, renderOptions)
   local debug = renderOptions.debug or false
   local folder = filterOptions.output_folder or ''
   local jobOutFolder = makeAbsolute(PANDOC_STATE.output_file 
+    and path.directory(PANDOC_STATE.output_file) ~= '.'
     and path.directory(PANDOC_STATE.output_file) or '')
   local texinputs = renderOptions.texinputs or nil
   -- to be created

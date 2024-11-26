@@ -169,9 +169,6 @@
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   
-  <!--[if lt IE 9]>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
-  <![endif]-->
 </head>
 <body>
 <header id="title-block-header">
@@ -179,17 +176,17 @@
 <p class="author">Julien Dutant</p>
 </header>
 <p>Imagify the following span: <span class="imagify">the formula <img
-src="/Users/julien/GitHub/imagify/_imagify_files/91e2dfd01db343f1441a474edd794ba084f1eeff.svg"
+src="/Users/julien/GitHub/imagify/_imagify_files/a7943bb7b37c0609cb3f2dc3ea1df7a8eb18c0da.svg"
 title="E = mc^2" style="vertical-align: baseline; " /></span>.</p>
 <div class="imagify">
 <p>For some inline formulas, such as <img
-src="/Users/julien/GitHub/imagify/_imagify_files/efdef70511006e9c768b4e426005a4e4e44fc11a.svg"
+src="/Users/julien/GitHub/imagify/_imagify_files/10a167e5c8ab6fafe4ffb2f317e609ef0e7edf4a.svg"
 title="x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}"
 style="vertical-align: baseline; " />, the default <code>baseline</code>
 vertical alignment is not ideal. You can adjust it manually, using a
 negative value to lower the image below the baseline: <span
 class="imagify" data-vertical-align="-.5em"><img
-src="/Users/julien/GitHub/imagify/_imagify_files/efdef70511006e9c768b4e426005a4e4e44fc11a.svg"
+src="/Users/julien/GitHub/imagify/_imagify_files/10a167e5c8ab6fafe4ffb2f317e609ef0e7edf4a.svg"
 title="x=\frac{-b\pm\sqrt[]{b^2-4ac}}{2a}"
 style="vertical-align: -.5em; " /></span>. In this case, I’ve specified
 a <code>-0.5em</code> value, which is about half a baseline down.</p>
@@ -200,12 +197,12 @@ placed the next bit within a dummy Div block.</p>
 <p>The display formula below is not explicitly marked to be imagified.
 However, it will be imagified in the filter’s <code>scope</code> option
 is set to <code>all</code>: <img
-src="/Users/julien/GitHub/imagify/_imagify_files/256555451568c56245dcd5561d969b842210d9fc.svg"
+src="/Users/julien/GitHub/imagify/_imagify_files/7ec773f044030097c522e097ba5e42ba72207263.svg"
 title="P = \frac{T}{V}" style="display:block; margin: .5em auto;" /></p>
 <div class="highlightme" data-zoom="1">
 <p>This next formula is imagified with options provided for elements of
 a custom class, <code>highlightme</code>: <img
-src="/Users/julien/GitHub/imagify/_imagify_files/3a5f3af70938265c12aa0a87ca10cc63019e502f.svg"
+src="/Users/julien/GitHub/imagify/_imagify_files/65f6707fedb9f7257958fa6cb875cb33675528e0.svg"
 title="P = \frac{T}{V}" style="border: 1px solid red;" />. They display
 the formula as an inline instead of a block and add a red border. They
 also specify a large zoom (4) but we’ve overridden it and locally
@@ -217,7 +214,7 @@ package with the <code>tikz</code> option for the
 conversion to SVG, the required <code>dvisvgm</code> option is set
 too:</p>
 <p><img
-src="/Users/julien/GitHub/imagify/_imagify_files/d0b91856bbbb7c4544b19c3b48e2331109cabbbc.svg"
+src="/Users/julien/GitHub/imagify/_imagify_files/6c097721def3a2ce7b0ba051416d8a517eced4b6.svg"
 title="\usetikzlibrary{intersections}
 \begin{tikzpicture}[scale=3,line cap=round,
 % Styles
@@ -259,14 +256,14 @@ LaTeX/PDF output) or SVG as required. That is useful to create
 cross-referencable figures with Pandoc-Crossref and Quarto.</p>
 <figure>
 <img
-src="/Users/julien/GitHub/imagify/_imagify_files/b7638b60066851770d9e93c88f828891631fe9de.svg"
+src="/Users/julien/GitHub/imagify/_imagify_files/7134307ba006a4062cb95b026c323dcbfb1b1e25.svg"
 alt="Figure 1 is a separate TikZ file" />
 <figcaption aria-hidden="true">Figure 1 is a separate TikZ
 file</figcaption>
 </figure>
 <figure>
 <img
-src="/Users/julien/GitHub/imagify/_imagify_files/b7daf3268abf7336be583ef90bd6f512a0568068.svg"
+src="/Users/julien/GitHub/imagify/_imagify_files/873fc6284857dadbaf5aa8087db63a8da66c898a.svg"
 alt="Figure 2 is a separate LaTeX file" />
 <figcaption aria-hidden="true">Figure 2 is a separate LaTeX
 file</figcaption>
@@ -281,7 +278,7 @@ a <code>.tikz</code> file should still have
 folder, here <code>fitch.sty</code> (a package not available on
 CTAN):</p>
 <p><img
-src="/Users/julien/GitHub/imagify/_imagify_files/4af68d35a503970cd2da8198ef155adca25a60e8.svg"
+src="/Users/julien/GitHub/imagify/_imagify_files/47806da0a2bc9008bd5e627be550a2878b685a31.svg"
 title="\begin{nd}
   \hypo[~] {1} {A \lor B}
   \open
