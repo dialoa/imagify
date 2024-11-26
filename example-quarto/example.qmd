@@ -49,7 +49,7 @@ placed the next bit within a dummy Div block.
 :::: arbitraryDiv
 
 The display formula below is not explicitly marked to be imagified. 
-However, it will be imagified in the filter's `scope` option is set
+However, it will be imagified if the filter's `scope` option is set
 to `all`:
 $$P = \frac{T}{V}$$
 
