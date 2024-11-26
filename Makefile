@@ -158,9 +158,12 @@ website: _site/index.html _site/$(FILTER_FILE)
 _site/index.html: $(DOCS_SRC) $(TEST_FILES) $(FILTER_FILE) .tools/docs.lua \
 		_site/output.html _site/style.css
 	@mkdir -p _site
+	@cp .tools/anchorlinks.js _site
 	$(PANDOC) \
 	    --standalone \
 	    --lua-filter=.tools/docs.lua \
+	    --lua-filter=.tools/anchorlinks.lua \
+		--lua-filter=$(FILTER_FILE) \
 	    --metadata=sample-file:$(TEST_SRC) \
 	    --metadata=result-file:_site/output.html \
 	    --metadata=code-file:$(FILTER_FILE) \

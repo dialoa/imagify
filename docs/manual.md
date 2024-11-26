@@ -73,6 +73,12 @@ Limitations:
 Installation
 ------------------------------------------------------------------
 
+### Pre-requisites
+
+In addition to Pandoc/Quarto, the filter needs a LaTeX installation with the package `dvisvgm` installed. 
+
+Quarto ships with a small LaTeX installation (tinytex), but the filter cannot use it.
+
 ### Plain pandoc
 
 Get `imagify.lua` from the Releases page and save it somewhere
