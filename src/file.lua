@@ -65,7 +65,7 @@ function writeToFile(contents, filepath, mode)
 	  f:write(contents)
 	  f:close()
   else
-    return 'File not found'
+    return 'File not writeable'
   end
 end
 

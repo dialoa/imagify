@@ -431,7 +431,7 @@ Specified within the `imagify` key.
 : string, path to the folder where images should be output. 
   Default `_imagify`.
 
-`ligs-path`
+`libgs-path`
 : string, path to the Ghostscript library. Default nil.
   This is not the Ghostscript program, but its library. It's
   passed to `dvisvgm`. See [DvisvgmMan] for details.
